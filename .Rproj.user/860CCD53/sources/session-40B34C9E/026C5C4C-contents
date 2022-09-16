@@ -114,7 +114,6 @@ sample_handmade = function(x, size, prob = NULL){
 #'
 #' Generate a matrix (n_females x n_males) with pollen load using Dirichlet & Multinomial distributions.
 #'
-#' @param n_males             Number of males (default value : 100)
 #' @param n_females           Number of females (default value : NULL)
 #' @param baseline_alpha      Baseline alpha values for Dirichlet distr. - vector of size n_females; see details (default value : NULL)
 #' @param gametes_by_male     Vector of number of gametes by males (e.g., from gametes_drawing() function)
@@ -165,11 +164,13 @@ sample_handmade = function(x, size, prob = NULL){
 #'
 #' @export
 
-pollen_export = function(n_males = 100, n_females = NULL, baseline_alpha = NULL,
+pollen_export = function(n_females = NULL, baseline_alpha = NULL,
                          pollen_repartition = c(0.01), plot = FALSE, gametes_by_male = NULL){
 
   if(is.null(gametes_by_male))
     stop("agument 'gametes_by_male' is missing, with no default")
+
+  n_males = length(gametes_by_male)
 
   if(is.null(baseline_alpha) & is.null(n_females))
     stop("One of 'baseline_alpha' or 'n_females' must be provided")
@@ -216,4 +217,45 @@ pollen_export = function(n_males = 100, n_females = NULL, baseline_alpha = NULL,
   }
 
   return(male_gamete_repartition)
+}
+
+
+#' Pollen competition
+#'
+#' Pollen competition to access 'eggs'
+#'
+#' @param pollen_repartition      Matrix females X males with number of male gametes by females (e.g., from pollen_export() function) (no default)
+#' @param males_comp_values       Males competitive values (e.g., from get_male_comp_values() function ) (no default)
+#' @param gametes_by_female       Vector of number of gametes by females (e.g., from gametes_drawing() function) (no default)
+#'
+#' @details Draw males identity for each fertilized eggs according to male comp. values (draw w/o replacement).
+#'
+#' Note: Pollen limitation (i.e. all eggs are not necessary fertilized - if pollen load is to low) is handled by the function
+#'
+#' @return List of size n_females, each element being a vector of males IDs corresponding to fertilized eggs
+#'
+#'
+
+pollen_competition = function(pollen_repartition, males_comp_values, gametes_by_female){
+  # Wonder whether it might be possible to vectorized that one
+  female_desc = list()
+  n_female = dim(pollen_repartition)[1]
+  n_male = dim(pollen_repartition)[2]
+
+  for(f in 1:n_female){
+    vector_to_sample = c()
+    vector_competition = c()
+    for(m in 1:n_male){
+      vector_to_sample = c(vector_to_sample, rep(m, pollen_repartition[f, m]))
+      vector_competition = c(vector_competition, rep(males_comp_values[m], pollen_repartition[f, m]) )
+    }
+
+    if(length(vector_to_sample) == 0){
+      female_desc[f] = list(NULL)
+    }else{
+      female_desc[[f]] = sample_handmade(vector_to_sample,
+                                         size = gametes_by_female[f], # Carefull, some pollen limitation might exists ! Meaning true draw size can be lower than gamete_by_female
+                                         prob = vector_competition / sum(vector_competition))
+    }
+  }
 }

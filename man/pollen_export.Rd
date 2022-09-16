@@ -5,17 +5,14 @@
 \title{Pollen (male) export distribution}
 \usage{
 pollen_export(
-  n_males = 100,
   n_females = NULL,
   baseline_alpha = NULL,
   pollen_repartition = c(0.01),
-  plot = F,
+  plot = FALSE,
   gametes_by_male = NULL
 )
 }
 \arguments{
-\item{n_males}{Number of males (default value : 100)}
-
 \item{n_females}{Number of females (default value : NULL)}
 
 \item{baseline_alpha}{Baseline alpha values for Dirichlet distr. - vector of size n_females; see details (default value : NULL)}
