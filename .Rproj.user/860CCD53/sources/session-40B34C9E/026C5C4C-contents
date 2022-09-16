@@ -227,16 +227,17 @@ pollen_export = function(n_females = NULL, baseline_alpha = NULL,
 #' @param pollen_repartition      Matrix females X males with number of male gametes by females (e.g., from pollen_export() function) (no default)
 #' @param males_comp_values       Males competitive values (e.g., from get_male_comp_values() function ) (no default)
 #' @param gametes_by_female       Vector of number of gametes by females (e.g., from gametes_drawing() function) (no default)
+#' @param pollen_limitation_stats (logical) Should statistics on pollen limitation be printed ? (default False)
 #'
 #' @details Draw males identity for each fertilized eggs according to male comp. values (draw w/o replacement).
 #'
-#' Note: Pollen limitation (i.e. all eggs are not necessary fertilized - if pollen load is to low) is handled by the function
+#' Note: Pollen limitation (i.e. all eggs are not necessary fertilized - if pollen load is to low) is handled by the function.
 #'
 #' @return List of size n_females, each element being a vector of males IDs corresponding to fertilized eggs
 #'
 #'
 
-pollen_competition = function(pollen_repartition, males_comp_values, gametes_by_female){
+pollen_competition = function(pollen_repartition, males_comp_values, gametes_by_female, pollen_limitation_stats = FALSE){
   # Wonder whether it might be possible to vectorized that one
   female_desc = list()
   n_female = dim(pollen_repartition)[1]
@@ -258,4 +259,10 @@ pollen_competition = function(pollen_repartition, males_comp_values, gametes_by_
                                          prob = vector_competition / sum(vector_competition))
     }
   }
+
+  if(pollen_limitation_stats){
+    print("Pollen limitation : XXXXXXXX TO DO XXXXXXXXXX")
+  }
+
+  female_desc
 }

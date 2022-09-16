@@ -23,3 +23,5 @@ pollen_repartition = pollen_export(n_females = n_females,
 # Mating Success (exact) can then be computed from the pollen_repartition, e.g.,
 mso_female = apply(pollen_repartition, 1, FUN = function(x) sum(x>0) )
 mso_male = apply(pollen_repartition, 2, FUN = function(x) sum(x>0) )
+
+# Pollen competition, i.e., who fertilized who

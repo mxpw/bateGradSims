@@ -4,12 +4,21 @@
 \alias{pollen_competition}
 \title{Pollen competition}
 \usage{
-pollen_competition(pollen_repartition, males_comp_values, gametes_by_female)
+pollen_competition(
+  pollen_repartition,
+  males_comp_values,
+  gametes_by_female,
+  pollen_limitation_stats = FALSE
+)
 }
 \arguments{
-\item{pollen_repartition}{See base::sample()}
+\item{pollen_repartition}{Matrix females X males with number of male gametes by females (e.g., from pollen_export() function) (no default)}
 
-\item{males_comp_values}{See base::sample()}
+\item{males_comp_values}{Males competitive values (e.g., from get_male_comp_values() function ) (no default)}
+
+\item{gametes_by_female}{Vector of number of gametes by females (e.g., from gametes_drawing() function) (no default)}
+
+\item{pollen_limitation_stats}{(logical) Should statistics on pollen limitation be printed ? (default False)}
 }
 \value{
 List of size n_females, each element being a vector of males IDs corresponding to fertilized eggs
@@ -18,5 +27,7 @@ List of size n_females, each element being a vector of males IDs corresponding t
 Pollen competition to access 'eggs'
 }
 \details{
+Draw males identity for each fertilized eggs according to male comp. values (draw w/o replacement).
 
+Note: Pollen limitation (i.e. all eggs are not necessary fertilized - if pollen load is to low) is handled by the function.
 }
