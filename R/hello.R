@@ -230,11 +230,15 @@ pollen_export = function(n_females = NULL, baseline_alpha = NULL,
 #' @param pollen_limitation_stats (logical) Should statistics on pollen limitation be printed ? (default False)
 #'
 #' @details Draw males identity for each fertilized eggs according to male comp. values (draw w/o replacement).
+#' Pollen limitation (i.e. all eggs are not necessary fertilized - if pollen load is to low) is handled by the function - statistics can be displayed
+#' by setting pollen_limitation_stats arguments to TRUE.
 #'
-#' Note: Pollen limitation (i.e. all eggs are not necessary fertilized - if pollen load is to low) is handled by the function.
+#' Note: more complex competition schemes could be considered in the future (e.g. (in)compatibilities, phenomenological equivalent of (dis)assortative mating,
+#' equivalent of phenological (dis)matches or kind of preemption effects(?)).
 #'
 #' @return List of size n_females, each element being a vector of males IDs corresponding to fertilized eggs
 #'
+#' @export
 #'
 
 pollen_competition = function(pollen_repartition, males_comp_values, gametes_by_female, pollen_limitation_stats = FALSE){

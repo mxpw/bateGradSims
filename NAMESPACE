@@ -2,6 +2,7 @@
 
 export(gametes_drawing)
 export(get_male_comp_values)
+export(pollen_competition)
 export(pollen_export)
 import(ggplot2)
 importFrom(cowplot,plot_grid)
