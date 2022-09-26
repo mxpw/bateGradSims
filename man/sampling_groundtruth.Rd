@@ -18,5 +18,7 @@ List containing MS & RS for females and for males
 Not sampling per se, compute exact RS/MS (genetic - i.e. in the sens of 'from fertilized eggs')
 }
 \details{
+(Should be kept as an internal function ?)
+
 Compute exact mating success (i.e. number of 'genetic' mates) and reproductive success (i.e. number of offspring) for males and females
 }

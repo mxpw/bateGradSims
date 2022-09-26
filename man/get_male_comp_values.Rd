@@ -4,16 +4,24 @@
 \alias{get_male_comp_values}
 \title{Draw male competitive value}
 \usage{
-get_male_comp_values(n_males = 100, mean_comp = 100, sd_comp = 0, plot = FALSE)
+get_male_comp_values(
+  n_males = 100,
+  distrib = sample,
+  dist_params = list(x = 100, replace = TRUE),
+  translation = TRUE,
+  plot = FALSE
+)
 }
 \arguments{
 \item{n_males}{Number of males (default value : 100)}
 
-\item{mean_comp}{Mean comp. value (default value : 100)}
+\item{distrib}{Prob. distribution to use (default value : sample, i.e. uniform distrib.)}
 
-\item{sd_comp}{Variability in comp. values (default value : 0, i.e. no competition !)}
+\item{dist_params}{Distribution parameters}
 
-\item{plot}{Should the comp. value histogram be plotted ? (default False)}
+\item{translation}{Should the resulting comp. value be translated to be > 0 ? (default TRUE)}
+
+\item{plot}{Should the comp. value histogram be plotted ? (default FALSE)}
 }
 \value{
 Vector of competitive values
@@ -22,10 +30,7 @@ Vector of competitive values
 Produce a vector of competitive values
 }
 \details{
-Simple implementation, male competitive values are drawn from a normal distribution.
+Draw males competitive values from provided distribution (uniform by default).
 After drawing, values are transformed such that all values are strictly above zero (i.e. x' = x + min(x) + 0.01).
-This is needed (at least for now) because these value are used later as probabilities...
-Be careful when using low mean and large variance (i.e. a case where some negatives values will be drawn), the mean after rescaling will be different.
-
-Note: When sd_comp is fixed to zero, pollen doesn't compete !
+This is needed because these value are used later as probabilities. (that default behavior can be modified with the translation arg.)
 }

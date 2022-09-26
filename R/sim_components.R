@@ -65,28 +65,32 @@ gametes_drawing = function(n_females = 100, n_males = 100, mean_gamete_female = 
 #' Produce a vector of competitive values
 #'
 #' @param n_males   Number of males (default value : 100)
-#' @param mean_comp Mean comp. value (default value : 100)
-#' @param sd_comp   Variability in comp. values (default value : 0, i.e. no competition !)
-#' @param plot      Should the comp. value histogram be plotted ? (default False)
+#' @param distrib   Prob. distribution to use (default value : sample, i.e. uniform distrib.)
+#' @param dist_params   Distribution parameters
+#' @param translation Should the resulting comp. value be translated to be > 0 ? (default TRUE)
+#' @param plot      Should the comp. value histogram be plotted ? (default FALSE)
 #'
-#' @details Simple implementation, male competitive values are drawn from a normal distribution.
+#' @details Draw males competitive values from provided distribution (uniform by default).
 #' After drawing, values are transformed such that all values are strictly above zero (i.e. x' = x + min(x) + 0.01).
-#' This is needed (at least for now) because these value are used later as probabilities...
-#' Be careful when using low mean and large variance (i.e. a case where some negatives values will be drawn), the mean after rescaling will be different.
-#'
-#' Note: When sd_comp is fixed to zero, pollen doesn't compete !
+#' This is needed because these value are used later as probabilities. (that default behavior can be modified with the translation arg.)
 #'
 #' @return Vector of competitive values
 #'
-#' @importFrom stats rnorm
 #' @importFrom graphics hist
 #'
 #' @export
 #'
-get_male_comp_values = function(n_males = 100, mean_comp = 100, sd_comp = 0, plot = FALSE){
-  male_comp = rnorm(n_males, mean_comp, sd_comp)
-  male_comp = male_comp - min(male_comp, 0) + 0.01
+get_male_comp_values = function(n_males = 100, distrib = sample, dist_params = list(x = 100, replace = TRUE),
+                                translation = TRUE, plot = FALSE){
+
+  male_comp = do.call(distrib, c(list(n_males), dist_params))
+
+  if(any(male_comp < 0) & translation) male_comp = male_comp - min(male_comp, 0) + 0.01
+
   if(plot) hist(male_comp, main = "Comp. values")
+
+  if(any(male_comp < 0)) warning("Some comp. values are negatives - error will arise when using pollen_competition() function is not corrected")
+
   return(male_comp)
 }
 
