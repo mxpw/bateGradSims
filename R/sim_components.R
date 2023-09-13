@@ -275,3 +275,91 @@ pollen_competition = function(pollen_repartition, males_comp_values, gametes_by_
   female_desc
 }
 
+
+#' Mating Success (obs)
+#'
+#' Mating success from 'observation' (i.e. where pollens land)
+#'
+#' @param pollen_repartition      Matrix females X males with number of male gametes by females (e.g., from pollen_export() function) (no default)
+#'
+#' @details Mating success from 'observation' (i.e. where pollens land)
+#'
+#' @return List with two vectors (mso_female, mso_male)
+#'
+#' @export
+#'
+
+ms_obs = function(pollen_repartition){
+  list(mso_female = apply(pollen_repartition, 1, FUN = function(x) sum(x>0) ),
+       mso_male = apply(pollen_repartition, 2, FUN = function(x) sum(x>0) ))
+}
+
+#' Fit Bateman gradients
+#'
+#' Fits Bateman gradients on samples
+#'
+#' @param samples Tibble (or dataframe) with columns : mso, msg, rsg, n_gam (can be null), sex, sampling_method (string), parameters (list), parameters (string) - ideally coming from sampling() function.
+#' @param family  Family used for GLM ; gaussian if data were scaled, poisson otherwise (or 'quasi' alternative when overdispersed data ) (default : 'gaussian')
+#'
+#' @details Fits Bateman gradients on each sampling_method / parameters_string combination.
+#' When data are scaled (in the sampling() function, should use 'gaussian' family), if not, user should specify (quasi-)poisson family instead.
+#' If n_gam (number of gametes by idv) is not NULL, two GLM are fitted ; one w/ n_gam as covariate, one w/o (controls for # of gametes or not)
+#'
+#' @return List of two tibbles : (i) one named 'gradients' with sampling_method, parameters, inferred gradients and differences to base gradients,
+#' (ii) one names 'glms' with sampling_method, parameters, parameters_string, data, and glms results
+#'
+#' @importFrom magrittr %>%
+#' @importFrom tibble tibble
+#' @importFrom dplyr nest_by filter pull select
+#' @importFrom tidyselect starts_with
+#' @importFrom stats glm
+#' @importFrom purrr map_dbl
+#'
+#' @export
+#'
+
+fit_gradients = function(samples, family = 'gaussian'){
+
+  n_gam_available = !any(is.na(samples$n_gam))
+
+  # Fit models
+  glms = samples %>% nest_by(.data$sampling_method, .data$parameters, .data$parameters_string)
+  glms = glms %>% mutate(lm_noGamControl = list(glm(rsg ~ (msg) * sex, data = .data$data, family = family)))
+
+  print(names(glms))
+
+  if(n_gam_available)
+    glms = glms %>% mutate(lm_gamControl = list(glm(rsg ~ (msg + n_gam) * sex, data = .data$data, family = family)))
+
+  # Get slopes
+  glms = glms %>% mutate(slopes_noGamControl = list(tibble(sex = c('F', 'M'),
+                                                           slopes = c( lm_noGamControl$coefficients[['msg']], lm_noGamControl$coefficients[['msg:sexM']] ))))
+
+  if(n_gam_available)
+    glms = glms %>% mutate(slopes_gamControl = list(tibble(sex = c('F', 'M'),
+                                                           slopes = c( lm_gamControl$coefficients[['msg']], lm_gamControl$coefficients[['msg:sexM']] ))))
+
+  # Compute deltas
+  base_noGamControl = (glms %>% filter(.data$sampling_method == 'base') %>% pull(.data$slopes_noGamControl))[[1]]
+
+  if(n_gam_available)
+    base_gamControl = (glms %>% filter(.data$sampling_method == 'base') %>% pull(.data$slopes_gamControl))[[1]]
+
+  glms = glms %>% ungroup() %>% mutate(abs_female_noGamControl = map_dbl(.data$slopes_noGamControl, .f = function(x) x[x$sex=='F', 2][[1]]),
+                                       delta_female_noGamControl = map_dbl(.data$abs_female_noGamControl,
+                                                                           .f = function(x) x - (base_noGamControl %>% filter(.data$sex=="F") %>% pull(.data$slopes)) ),
+                                       abs_male_noGamControl = map_dbl(.data$slopes_noGamControl, .f = function(x) x[x$sex=='M', 2][[1]]),
+                                       delta_male_noGamControl = map_dbl(.data$abs_male_noGamControl,
+                                                                         .f = function(x) x - (base_noGamControl %>% filter(.data$sex=="M") %>% pull(.data$slopes)) ))
+
+  if(n_gam_available)
+    glms = glms %>% ungroup() %>% mutate(abs_female_gamControl = map_dbl(.data$slopes_gamControl, .f = function(x) x[x$sex=='F', 2][[1]] ),
+                                         delta_female_gamControl = map_dbl(.data$abs_female_gamControl,
+                                                                           .f = function(x) x - (base_gamControl %>% filter(.data$sex=="F") %>% pull(.data$slopes)) ),
+                                         abs_male_gamControl = map_dbl(.data$slopes_gamControl, .f = function(x) x[x$sex=='M', 2][[1]] ),
+                                         delta_male_gamControl = map_dbl(.data$abs_male_gamControl,
+                                                                         .f = function(x) x - (base_gamControl %>% filter(.data$sex=="M") %>% pull(.data$slopes)) ))
+
+  return(list(gradients = glms %>% select(-starts_with(c("slopes_", "lm_")), -.data$data, -.data$parameters_string),
+              glms = glms %>% select(-starts_with(c('female_', 'male_', 'delta_', 'slopes_')))))
+}

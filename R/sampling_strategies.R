@@ -385,4 +385,85 @@ sampling_random = function( fertilized_eggs, n_males, total_samples = 1000 ){
               msg_male = msg_male_rd,
               rsg_male = rsg_male_rd))
 
+}
+
+#' Sampling
+#'
+#' Convenient wrapper around sampling strategies with convenient output format
+#'
+#'
+#' @param fertilized_eggs List of size n_females containing father for each fertilized eggs (from e.g., pollen_competition() function) (no default)
+#' @param n_males Number of males (no default)
+#' @param methods List of lists containing methods to use and associated parameters (see examples)
+#' @param scaled Should the MS/RS should be scaled ? (default TRUE)
+#' @param mso MS obtained directly from observations (i.e. pollen repartition over females before pollen competition) (from ms_obs() function, not required)
+#' @param gametes Number of gametes for each females/males (from gametes_drawing() function, not required)
+#'
+#' @details Run all required sampling methods with associated parameters. Results can be scaled by sex, methods & methods parameters.
+#' User defined function can also be used here ; two constraints : (i) first two arguments must be 'fertilized_eggs' and 'n_males', others can be
+#' anything defined by the user, (ii) the function must return list with four elements : msg_female, rsg_female, msg_male, rsg_male.
+#'
+#' @return MS (obs), MS (gen), RS (gen), gamete counts, sex, sampling_method, and parameters used for the sampling method
+#'
+#' @importFrom magrittr %>%
+#' @importFrom tibble tibble
+#' @importFrom dplyr group_by ungroup mutate across
+#'
+#' @examples
+#' \dontrun{
+#' methods = list(base = list(method = "sampling_groundtruth",
+#'                            params = list()),
+#'                fixed = list(method = "sampling_fixed",
+#'                             params = list(by_female_samples = 50, undercount_female = 'keep')),
+#'                prorata = list(method = "sampling_prorata",
+#'                               params = list(by_female_prop = 0.10, min_threshold = 0,
+#'                                             undercount_female = 'keep', upsample_strategy = 's2')),
+#'                random = list(method = "sampling_random",
+#'                              params = list()))
+#'
+#' sampling(fertilized_eggs, n_males, methods = methods, mso = mso, gametes = gametes, scaled = T)
+#' }
+#' @export
+#'
+#'
+sampling = function(fertilized_eggs, n_males, methods = NULL, scaled = TRUE, mso = NULL, gametes = NULL){
+
+  n_females = length(fertilized_eggs)
+
+  output = tibble(mso = numeric(), msg = numeric(), rsg = numeric(), n_gam = numeric(),
+                  sex = character(), sampling_method = character(), parameters = list(), parameters_string = character())
+
+  if(!is.null(mso)){
+    mso_vec = c(mso$mso_female, mso$mso_male)
+  }else{
+    mso_vec = NA
   }
+
+  if(!is.null(gametes)){
+    gam_vec = c(gametes$gam_female, gametes$gam_male)
+  }else{
+    gam_vec = NA
+  }
+
+  for(m in 1:length(methods)){
+    spl = do.call( methods[[m]]$method, c(list(fertilized_eggs, n_males), methods[[m]]$params) )
+    tmp = tibble(mso = mso_vec,
+                 msg = c(spl$msg_female, spl$msg_male),
+                 rsg = c(spl$rsg_female, spl$rsg_male),
+                 n_gam = gam_vec,
+                 sex = c(rep("F", n_females), rep("M", n_males)),
+                 sampling_method = names(methods)[m],
+                 parameters = list(methods[[m]]$params),
+                 parameters_string = paste(names(methods[[m]]$params),methods[[m]]$params,sep="=",collapse=";" ))
+    output = rbind(output, tmp)
+  }
+
+
+  print("Scaling is weird !! Should it not be true scaling instead ?! here, when zero => stay zero")
+  if(scaled)
+    return(output %>% group_by(.data$sex, .data$sampling_method, .data$parameters_string) %>%
+             mutate(across(.data$mso:.data$rsg, ~ .x / mean(.x, na.rm = T))) %>%
+             ungroup())
+
+  return(output)
+}
