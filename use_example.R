@@ -1,9 +1,9 @@
 library(bateGradSims)
 
 n_females = 100
-n_males = 100
+n_males = 90
 n_gamete_fem = 200
-ratio_gamete = 10
+ratio_gamete = 0.8
 cv_normal_male = 0.1
 
 # Get gametes
@@ -20,11 +20,15 @@ pollen_repartition = pollen_export(n_females = n_females,
                                     pollen_repartition = c(0.01),
                                     plot = T)
 
-# Mating Success (exact) can then be computed from the pollen_repartition
+# Mating Success (observed - exact) can then be computed from the pollen_repartition
 mso = ms_obs(pollen_repartition)
 
 # Pollen competition, i.e., who fertilizes who
 fertilized_eggs = pollen_competition(pollen_repartition, males_comp_values, gametes$gam_female)
+
+# Aborted eggs
+fertilized_eggs = eggs_abortion(fertilized_eggs, aborded_fraction = 0)
+
 
 # Get samples 'by hand' - not the better strategy in order to compare method afterward
 sampling_groundtruth(fertilized_eggs, n_males)

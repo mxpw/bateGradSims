@@ -80,8 +80,11 @@ gametes_drawing = function(n_females = 100, n_males = 100, mean_gamete_female = 
 #'
 #' @export
 #'
-get_male_comp_values = function(n_males = 100, distrib = sample, dist_params = list(x = 100, replace = TRUE),
-                                translation = TRUE, plot = FALSE){
+get_male_comp_values = function(n_males = 100,
+                                distrib = sample,
+                                dist_params = list(x = 100, replace = TRUE),
+                                translation = TRUE,
+                                plot = FALSE){
 
   male_comp = do.call(distrib, c(list(n_males), dist_params))
 
@@ -89,7 +92,7 @@ get_male_comp_values = function(n_males = 100, distrib = sample, dist_params = l
 
   if(plot) hist(male_comp, main = "Comp. values")
 
-  if(any(male_comp < 0)) warning("Some comp. values are negatives - error will arise when using pollen_competition() function is not corrected")
+  if(any(male_comp < 0)) warning("Some comp. values are negatives - error will arise when using pollen_competition() function if not corrected")
 
   return(male_comp)
 }
@@ -202,7 +205,7 @@ pollen_export = function(n_females = NULL, baseline_alpha = NULL,
     male_gamete_repartition[,i] = rmultinom(1, gametes_by_male[i], dirichlet_draw[,i])
 
   if(plot){
-    tp = dirichlet_draw[,sample(dim(dirichlet_draw)[2], min(15, dim(dirichlet_draw)[2])] %>%
+    tp = dirichlet_draw[,sample(dim(dirichlet_draw)[2], min(15, dim(dirichlet_draw)[2]))] %>%
       as_tibble() %>%
       rownames_to_column() %>%
       pivot_longer(-.data$rowname)
@@ -270,11 +273,35 @@ pollen_competition = function(pollen_repartition, males_comp_values, gametes_by_
 
   if(pollen_limitation_stats){
     print("Pollen limitation : XXXXXXXX TO DO XXXXXXXXXX")
+    # TODO : compute % of non-fertilized eggs by females
+    # TODO : other stats ?
   }
 
   female_desc
 }
 
+#' Eggs abortion
+#'
+#' Discount fertilized eggs from females - simulates abortion
+#'
+#' @param fertilized_eggs List of females' eggs with fathers identities (e.g. output from pollen_competition()) (no default)
+#' @param aborded_fraction Fraction(s) of aborted eggs by females (see details) (default = 0)
+#'
+#' @details Return a same output as pollen_competition() function but after abortion (i.e. given fraction of eggs is discounted by female).
+#' aborded_fraction can be either a float (in [0, 1] range) or a vector of size n_females giving fraction for each female.
+#'
+#' @return List of size n_females, each element being a vector of males IDs corresponding to fertilized eggs - after abortions
+#'
+#' @export
+#'
+
+eggs_abortion = function(fertilized_eggs, aborded_fraction = 0){
+
+  mapply(function(eggs, fraction) sample(eggs, size = length(eggs) - fraction*length(eggs)),
+         fertilized_eggs,
+         aborded_fraction)
+
+}
 
 #' Mating Success (obs)
 #'
