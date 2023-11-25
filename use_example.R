@@ -48,7 +48,7 @@ methods = list(base = list(method = "sampling_groundtruth", params = list()),
                                                                          undercount_female = 'remove', upsample_strategy = 's2')),
                random = list(method = "sampling_random", params = list(total_samples = 4000)))
 
-samples = sampling(fertilized_eggs, n_males, methods = methods, mso = mso, gametes = gametes, scaled = T)
+samples = sampling(fertilized_eggs, n_males, methods = methods, mso = mso, gametes = gametes, scaled = T, n_rep = 5)
 gradients = fit_gradients(samples)
 gradients$gradients
 

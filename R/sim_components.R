@@ -350,7 +350,7 @@ fit_gradients = function(samples, family = 'gaussian'){
   n_gam_available = !any(is.na(samples$n_gam))
 
   # Fit models
-  glms = samples %>% nest_by(.data$sampling_method, .data$parameters, .data$parameters_string)
+  glms = samples %>% nest_by(.data$sampling_method, .data$parameters, .data$parameters_string, .data$replicate)
   glms = glms %>% mutate(lm_noGamControl = list(glm(rsg ~ (msg) * sex, data = .data$data, family = family)))
 
   print(names(glms))
@@ -387,6 +387,6 @@ fit_gradients = function(samples, family = 'gaussian'){
                                          delta_male_gamControl = map_dbl(.data$abs_male_gamControl,
                                                                          .f = function(x) x - (base_gamControl %>% filter(.data$sex=="M") %>% pull(.data$slopes)) ))
 
-  return(list(gradients = glms %>% select(-starts_with(c("slopes_", "lm_")), -.data$data, -.data$parameters_string),
+  return(list(gradients = glms %>% select(-starts_with(c("slopes_", "lm_")), -.data$data),
               glms = glms %>% select(-starts_with(c('female_', 'male_', 'delta_', 'slopes_')))))
 }

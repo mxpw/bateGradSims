@@ -398,12 +398,13 @@ sampling_random = function( fertilized_eggs, n_males, total_samples = 1000 ){
 #' @param scaled Should the MS/RS should be scaled ? (default TRUE)
 #' @param mso MS obtained directly from observations (i.e. pollen repartition over females before pollen competition) (from ms_obs() function, not required)
 #' @param gametes Number of gametes for each females/males (from gametes_drawing() function, not required)
+#' @param n_rep Number of time each sampling method shoud be replicated (default 1)
 #'
-#' @details Run all required sampling methods with associated parameters. Results can be scaled by sex, methods & methods parameters.
+#' @details Run all required sampling methods with associated parameters n_rep time each. Results can be scaled by sex, methods & methods parameters.
 #' User defined function can also be used here ; two constraints : (i) first two arguments must be 'fertilized_eggs' and 'n_males', others can be
 #' anything defined by the user, (ii) the function must return list with four elements : msg_female, rsg_female, msg_male, rsg_male.
 #'
-#' @return MS (obs), MS (gen), RS (gen), gamete counts, sex, sampling_method, and parameters used for the sampling method
+#' @return MS (obs), MS (gen), RS (gen), gamete counts, sex, sampling_method, parameters used for the sampling method, and replicate IDs
 #'
 #' @importFrom magrittr %>%
 #' @importFrom tibble tibble
@@ -426,7 +427,7 @@ sampling_random = function( fertilized_eggs, n_males, total_samples = 1000 ){
 #' @export
 #'
 #'
-sampling = function(fertilized_eggs, n_males, methods = NULL, scaled = TRUE, mso = NULL, gametes = NULL){
+sampling = function(fertilized_eggs, n_males, methods = NULL, scaled = TRUE, mso = NULL, gametes = NULL, n_rep = 1){
 
   n_females = length(fertilized_eggs)
 
@@ -446,22 +447,25 @@ sampling = function(fertilized_eggs, n_males, methods = NULL, scaled = TRUE, mso
   }
 
   for(m in 1:length(methods)){
-    spl = do.call( methods[[m]]$method, c(list(fertilized_eggs, n_males), methods[[m]]$params) )
-    tmp = tibble(mso = mso_vec,
-                 msg = c(spl$msg_female, spl$msg_male),
-                 rsg = c(spl$rsg_female, spl$rsg_male),
-                 n_gam = gam_vec,
-                 sex = c(rep("F", n_females), rep("M", n_males)),
-                 sampling_method = names(methods)[m],
-                 parameters = list(methods[[m]]$params),
-                 parameters_string = paste(names(methods[[m]]$params),methods[[m]]$params,sep="=",collapse=";" ))
-    output = rbind(output, tmp)
+    for(r in 1:n_rep){
+      spl = do.call( methods[[m]]$method, c(list(fertilized_eggs, n_males), methods[[m]]$params) )
+      tmp = tibble(mso = mso_vec,
+                   msg = c(spl$msg_female, spl$msg_male),
+                   rsg = c(spl$rsg_female, spl$rsg_male),
+                   n_gam = gam_vec,
+                   sex = c(rep("F", n_females), rep("M", n_males)),
+                   sampling_method = names(methods)[m],
+                   parameters = list(methods[[m]]$params),
+                   parameters_string = paste(names(methods[[m]]$params),methods[[m]]$params,sep="=",collapse=";" ),
+                   replicate = r)
+      output = rbind(output, tmp)
+    }
   }
 
 
   print("Scaling is weird !! Should it not be true scaling instead ?! here, when zero => stay zero")
   if(scaled)
-    return(output %>% group_by(.data$sex, .data$sampling_method, .data$parameters_string) %>%
+    return(output %>% group_by(.data$sex, .data$sampling_method, .data$parameters_string, .data$replicate) %>%
              mutate(across(.data$mso:.data$rsg, ~ .x / mean(.x, na.rm = T))) %>%
              ungroup())
 

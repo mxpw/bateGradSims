@@ -10,7 +10,8 @@ sampling(
   methods = NULL,
   scaled = TRUE,
   mso = NULL,
-  gametes = NULL
+  gametes = NULL,
+  n_rep = 1
 )
 }
 \arguments{
@@ -25,15 +26,17 @@ sampling(
 \item{mso}{MS obtained directly from observations (i.e. pollen repartition over females before pollen competition) (from ms_obs() function, not required)}
 
 \item{gametes}{Number of gametes for each females/males (from gametes_drawing() function, not required)}
+
+\item{n_rep}{Number of time each sampling method shoud be replicated (default 1)}
 }
 \value{
-MS (obs), MS (gen), RS (gen), gamete counts, sex, sampling_method, and parameters used for the sampling method
+MS (obs), MS (gen), RS (gen), gamete counts, sex, sampling_method, parameters used for the sampling method, and replicate IDs
 }
 \description{
 Convenient wrapper around sampling strategies with convenient output format
 }
 \details{
-Run all required sampling methods with associated parameters. Results can be scaled by sex, methods & methods parameters.
+Run all required sampling methods with associated parameters n_rep time each. Results can be scaled by sex, methods & methods parameters.
 User defined function can also be used here ; two constraints : (i) first two arguments must be 'fertilized_eggs' and 'n_males', others can be
 anything defined by the user, (ii) the function must return list with four elements : msg_female, rsg_female, msg_male, rsg_male.
 }
