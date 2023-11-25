@@ -202,7 +202,7 @@ pollen_export = function(n_females = NULL, baseline_alpha = NULL,
     male_gamete_repartition[,i] = rmultinom(1, gametes_by_male[i], dirichlet_draw[,i])
 
   if(plot){
-    tp = dirichlet_draw[,sample(dim(dirichlet_draw)[2], 15)] %>%
+    tp = dirichlet_draw[,sample(dim(dirichlet_draw)[2], min(15, dim(dirichlet_draw)[2])] %>%
       as_tibble() %>%
       rownames_to_column() %>%
       pivot_longer(-.data$rowname)
