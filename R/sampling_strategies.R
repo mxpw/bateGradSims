@@ -241,8 +241,7 @@ sampling_prorata = function(fertilized_eggs, n_males, total_samples = 1000, by_f
   # Size before upscaling
   # print(paste("(debug) Size before upscaling ::: > ", length(unlist(fertilized_eggs_reduced))))
 
-  if(undercount_female == 'keep'){
-  }
+  if(undercount_female == 'keep'){}
   else if(undercount_female == 'remove'){
     female_to_remove = condition_one
     print(paste0("--> ",sum(condition_one)," (",round(100*mean(condition_one),2)," %) female(s) will be removed"))
@@ -272,7 +271,19 @@ sampling_prorata = function(fertilized_eggs, n_males, total_samples = 1000, by_f
     eggs = eggs - min_threshold
 
     if(upsampling_plot)
-      plot(sort(eggs + min_threshold))
+      ordering_ = sort(eggs + min_threshold, index.return = T, na.last = T)$ix
+      y = (eggs + min_threshold)[ordering_]
+      removed_females = is.na(y)
+      y[ removed_females ] = 0
+      g1 = ggplot()+
+        geom_point(aes(x = 1:length(ordering_),
+                       y = y, shape = removed_females), show.legend = F)+
+        scale_shape_manual(values=c(19, 4))+
+        geom_hline(yintercept = min_threshold, linetype = "dashed")+
+        theme_bw()+
+        xlab("Females ID")+
+        ylab("Eggs to sample")+
+        expand_limits(y=0)
 
     if( sum(eggs, na.rm=T) < 0 ){
       stop("Upsampling is not possible !")
@@ -312,7 +323,8 @@ sampling_prorata = function(fertilized_eggs, n_males, total_samples = 1000, by_f
 
     # After upsampling
     if(upsampling_plot)
-      points(sort(eggs + min_threshold), col = 'red')
+      g1 = g1 + geom_point(aes(x = 1:length(eggs), y = (eggs + min_threshold)[ordering_]), color = "red", inherit.aes = F)
+      print(g1)
 
     # Recompute Female reduced
     eggs = eggs + min_threshold
