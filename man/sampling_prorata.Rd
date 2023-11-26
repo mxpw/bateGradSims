@@ -12,7 +12,8 @@ sampling_prorata(
   min_threshold = 0,
   undercount_female = "remove",
   upsample_strategy = "s1",
-  upsampling_plot = FALSE
+  upsampling_plot = FALSE,
+  paternity_share = TRUE
 )
 }
 \arguments{
@@ -31,6 +32,8 @@ sampling_prorata(
 \item{upsample_strategy}{Which strategy to use ........}
 
 \item{upsampling_plot}{Should upsampling effects (i.e. deviations from exact proportions) be plotted ? (default FALSE)}
+
+\item{paternity_share}{Should males RS be rescaled by total number of females' eggs (default TRUE)}
 }
 \value{
 List containing MS & RS for females and for males
@@ -73,4 +76,6 @@ Note that upsampling might not always be possible (while keeping constant total)
 Carefull when number of eggs by idv is low ... not sure about the behavior (rounding close from zero) - might need an update
 
 What to do when theo_perc * total eggs ~ e.g., 0.3 (e.g. an idv with 4 eggs, and theo_prec = 1\%) - take at least one, or not ?
+
+Paternity share is set to TRUE by default but can be changed. If False, males RS is not rescaled.
 }

@@ -4,7 +4,12 @@
 \alias{sampling_random}
 \title{Random sampling}
 \usage{
-sampling_random(fertilized_eggs, n_males, total_samples = 1000)
+sampling_random(
+  fertilized_eggs,
+  n_males,
+  total_samples = 1000,
+  paternity_share = TRUE
+)
 }
 \arguments{
 \item{fertilized_eggs}{List of size n_females containing father for each fertilized eggs (from e.g., pollen_competition() function) (no default)}
@@ -12,6 +17,8 @@ sampling_random(fertilized_eggs, n_males, total_samples = 1000)
 \item{n_males}{Number of males (no default)}
 
 \item{total_samples}{Total number of eggs to be sample (default 1000)}
+
+\item{paternity_share}{(default TRUE)}
 }
 \value{
 List containing MS & RS for females and for males
@@ -25,6 +32,8 @@ Samples eggs randomly (i.e. independently of female identity, see details)
 Compute mating success (i.e. number of 'genetic' mates) and reproductive success (i.e. number of offspring) for males and females
 using a fully random strategy. A given number of eggs (total_samples) is randomly chosen, then parents identity is checked to compute MS/RS for males
 et MS for females.
+
+Paternity share is set to TRUE by default but can be changed. If False, males RS is not rescaled.
 
 Note that in all cases, the RS for females is computed using all eggs ! (should add another option here to allow this behavior to be changed ?)
 }

@@ -9,7 +9,8 @@ sampling_fixed(
   n_males,
   total_samples = 1000,
   by_female_samples = NULL,
-  undercount_female = "remove"
+  undercount_female = "remove",
+  paternity_share = TRUE
 )
 }
 \arguments{
@@ -22,6 +23,8 @@ sampling_fixed(
 \item{by_female_samples}{Number of eggs to be sample by female (no default)}
 
 \item{undercount_female}{Which strategy to use when some females doesn't have enough eggs to be sample ? (see details, default 'remove')}
+
+\item{paternity_share}{Should males RS be rescaled by total number of females' eggs (default TRUE)}
 }
 \value{
 List containing MS & RS for females and for males
@@ -41,4 +44,6 @@ Note that in all cases, the RS for females is computed using all eggs ! (should 
 In some cases, some females might not have enough eggs to sample. Two strategies can be used to consider these cases (i) 'remove' strategy,
 (ii) 'keep' strategy. The default 'remove' strategy doesn't consider females w/o enough eggs (will be NA in the output), the 'keep' strategy
 consider these females by sampling all their eggs.
+
+Paternity share is set to TRUE by default but can be changed. If False, males RS is not rescaled.
 }
