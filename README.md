@@ -28,8 +28,10 @@ library(bateGradSims)
 - [ ] Proposition pour lier nombre de gamètes et compétitivité pour les mâles (covariance positive, négative, nulle)
   - [ ] Utiliser distributions conditionnelles ? (i.e. ~P(Y|X))
 - [ ] "Corrélation de parentalité" i.e. probabilité que deux graines tirées aléatoirement soient du même père (voir Dorken & Perry, 2017) 
-  - [ ] Version de base
-  - [ ] Version avec correction pour tailles de pop. 
+  - [x] Version de base
+  - [x] Version avec correction pour tailles de pop. 
+  - [ ] __Q__ Quelle valeur quand une unique graine (donc un male) ? 
+  - [ ] __Q__ Pop. average quand certaines femelle n'ont pas de graines ? (NaN pour la correlated parternity en l'état, on exclut ces femelles de la moyenne ?)
 - [ ] Implémenter la gestion auto. des plots des gradients
 	- [ ] Ajouter annotations (e.g., valeur de $\beta$, éventuellement $\Delta(\beta_{true}-\beta_{est})$)
 	- [ ] Attention - en l'état, ce ne sont pas les $\beta$ estimés qui sont représentés

@@ -545,3 +545,52 @@ sampling = function(fertilized_eggs, n_males, methods = NULL, scaled = TRUE, mso
 
   return(output)
 }
+
+
+#' Correlated paternity
+#'
+#' Compute detailed paternity correlations (i.e. by female $r_p$)
+#'
+#' @param fertilized_eggs List of size n_females containing father for each fertilized eggs (from e.g., pollen_competition() function or any sampling_XXX() method) (no default)
+#'
+#' @details Return per female correlated paternity. See companion function pop_average_rp() for further processing.
+#'
+#' @return Vector of size n_female with $r_p$ for each female.
+#'
+#' @export
+#'
+correlated_paternity = function(fertilized_eggs){
+  unlist(lapply(fertilized_eggs, rp_calculation))
+}
+
+#' Correlated paternity (internal function)
+
+rp_calculation = function(female_seed_set){
+  count_by_male = table(female_seed_set)
+  numerator = sum(count_by_male^2-count_by_male)
+  denominator = sum(count_by_male)^2 - sum(count_by_male)
+  return( numerator / denominator )
+}
+
+#' Pop. average correlated paternity
+#'
+#' Return population average correlated paternity - using Dorken & Perry method and potential correction.
+#'
+#' @param correlated_paternity Vector of size n_females containing by female correlated paternity (no default)
+#' @param n_males Number of male in the population
+#'
+#' @details Compute pop. average correlated paternity (following Dorken & Perry, 2017) and corrected version.
+#'
+#' @return List of two elements, the uncorrected pop. average correlated paternity and the corrected version.
+#'
+#' @export
+#'
+pop_average_correlated_paternity = function(correlated_paternity, n_males){
+  r = list()
+  if(any(is.nan(correlated_paternity)|is.na(correlated_paternity))){
+    print("Warning: some female correlated paternity is NaN or NA, will be excluded from the average")
+  }
+  r[['pop_average_correlated_paternity']] = mean(correlated_paternity, na.rm = TRUE)
+  r[['pop_average_correlated_paternity_corrected']] = r[['pop_average_correlated_paternity']] * (n_males - 1)
+  return(r)
+}

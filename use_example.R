@@ -29,12 +29,15 @@ fertilized_eggs = pollen_competition(pollen_repartition, males_comp_values, game
 # Aborted eggs
 fertilized_eggs = eggs_abortion(fertilized_eggs, aborded_fraction = 0)
 
+# Correlated paternity (before sampling)
+pop_average_correlated_paternity(correlated_paternity = correlated_paternity(fertilized_eggs),
+                                 n_males = n_males)
 
 # Get samples 'by hand' - not the better strategy in order to compare method afterward
 sampling_groundtruth(fertilized_eggs, n_males)
 sampling_fixed(fertilized_eggs, n_males, by_female_samples = 50, undercount_female = 'keep')
-sampling_prorata(fertilized_eggs, n_males, by_female_prop = 0.10, min_threshold = 0,
-                 undercount_female = 'keep', upsample_strategy = 's2', upsampling_plot = T)
+sampling_prorata(fertilized_eggs, n_males, by_female_prop = 0.5, min_threshold = 30,
+                 undercount_female = 'remove_and_upsample', upsample_strategy = 's2', upsampling_plot = T)
 sampling_random(fertilized_eggs, n_males)
 
 
@@ -48,7 +51,7 @@ methods = list(base = list(method = "sampling_groundtruth", params = list()),
                                                                          undercount_female = 'remove', upsample_strategy = 's2')),
                random = list(method = "sampling_random", params = list(total_samples = 4000)))
 
-samples = sampling(fertilized_eggs, n_males, methods = methods, mso = mso, gametes = gametes, scaled = T, n_rep = 5)
+samples = sampling(fertilized_eggs, n_males, methods = methods, mso = mso, gametes = gametes, scaled = T, n_rep = 1)
 gradients = fit_gradients(samples)
 gradients$gradients
 
@@ -61,6 +64,9 @@ gradients$gradients %>%
 plot_list = list()
 for(i in 1:nrow(gradients$glms)){
   print(paste0( gradients$glms$sampling_method[[i]], '::' , gradients$glms$parameters_string[[i]] ))
-  plot_list[[i]] = ggplot( (gradients$glms %>% pull(data))[[i]], aes(x = msg, y = rsg, color = sex))+geom_point()+geom_smooth(method='lm')
+  plot_list[[i]] = ggplot( (gradients$glms %>% pull(data))[[i]], aes(x = msg, y = rsg, color = sex))+
+    geom_point()+
+    geom_smooth(method='lm')+
+    theme_bw()
 }
 cowplot::plot_grid(plotlist = plot_list)
