@@ -11,8 +11,16 @@ gametes = gametes_drawing(n_females = n_females, n_males = n_males,
                           mean_gamete_female = n_gamete_fem, ratio_gamete = ratio_gamete,
                           male_distrib_params = cv_normal_male)
 
-# Get males comp. values
+# Get males comp. values (either from any distribution)
 males_comp_values = get_male_comp_values(n_males = n_males, dist_params = list(x=1:100, replace = TRUE), plot = T)
+
+# from a conditional distrib. e.g., depending on gametes counts
+males_comp_values = get_male_comp_values_from_feature(mean_comp_value = 10,
+                                                      sd_comp_value = 10,
+                                                      rho = -0.2,
+                                                      feature = gametes$gam_male,
+                                                      plot=T)
+plot(gametes$gam_male, males_comp_values)
 
 # Get pollen repartition
 pollen_repartition = pollen_export(n_females = n_females,
@@ -30,7 +38,7 @@ fertilized_eggs = pollen_competition(pollen_repartition, males_comp_values, game
 fertilized_eggs = eggs_abortion(fertilized_eggs, aborded_fraction = 0)
 
 # Correlated paternity (before sampling)
-pop_average_correlated_paternity(correlated_paternity = correlated_paternity(fertilized_eggs),
+pop_average_rp(correlated_paternity = correlated_paternity(fertilized_eggs),
                                  n_males = n_males)
 
 # Get samples 'by hand' - not the better strategy in order to compare method afterward

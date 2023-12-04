@@ -585,7 +585,7 @@ rp_calculation = function(female_seed_set){
 #'
 #' @export
 #'
-pop_average_correlated_paternity = function(correlated_paternity, n_males){
+pop_average_rp = function(correlated_paternity, n_males){
   r = list()
   if(any(is.nan(correlated_paternity)|is.na(correlated_paternity))){
     print("Warning: some female correlated paternity is NaN or NA, will be excluded from the average")

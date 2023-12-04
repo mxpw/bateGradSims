@@ -25,8 +25,8 @@ library(bateGradSims)
 
 ### TODO
 
-- [ ] Proposition pour lier nombre de gamètes et compétitivité pour les mâles (covariance positive, négative, nulle)
-  - [ ] Utiliser distributions conditionnelles ? (i.e. ~P(Y|X))
+- [x] Proposition pour lier nombre de gamètes et compétitivité pour les mâles (covariance positive, négative, nulle)
+  - [x] Utiliser distributions conditionnelles (i.e. ~P(Y|X)) - nouvelle fonction get_male_xxx() ; le moyenne et variance de la distribution "jointe" (e.g. gametes par male) sont estimées empiriquement - option pour le spécifier ?
 - [ ] "Corrélation de parentalité" i.e. probabilité que deux graines tirées aléatoirement soient du même père (voir Dorken & Perry, 2017) 
   - [x] Version de base
   - [x] Version avec correction pour tailles de pop. 

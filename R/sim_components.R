@@ -73,7 +73,7 @@ gametes_drawing = function(n_females = 100, n_males = 100, mean_gamete_female = 
 #' @details Draw males competitive values from provided distribution (uniform by default).
 #' After drawing, values are transformed such that all values are strictly above zero (i.e. x' = x + min(x) + 0.01).
 #' This is needed because these value are used later as probabilities. (that default behavior can be modified with the translation arg.)
-#'
+#' Note however this may change mean and variance of specified distribution !
 #' @return Vector of competitive values
 #'
 #' @importFrom graphics hist
@@ -88,7 +88,67 @@ get_male_comp_values = function(n_males = 100,
 
   male_comp = do.call(distrib, c(list(n_males), dist_params))
 
-  if(any(male_comp < 0) & translation) male_comp = male_comp - min(male_comp, 0) + 0.01
+  if(any(male_comp < 0) & translation){
+    male_comp = male_comp - min(male_comp, 0) + 0.01
+    warning("Competitive values are shifted to be above zero (mean and variance may change)")
+  }
+
+  if(plot) hist(male_comp, main = "Comp. values")
+
+  if(any(male_comp < 0)) warning("Some comp. values are negatives - error will arise when using pollen_competition() function if not corrected")
+
+  return(male_comp)
+}
+
+#' Draw male competitive value relative to another feature (e.g. pollen set size)
+#'
+#' Produce a vector of competitive values from conditional normal distribution
+#'
+#' @param mean_comp_value Mean competitive value for males
+#' @param sd_comp_value Standard deviation of competitive values for males
+#' @param rho Correlation between competitive values and provided feature
+#' @param feature Vector of size n_males with
+#' @param translation Should the resulting comp. value be translated to be > 0 ? (default TRUE)
+#' @param plot      Should the comp. value histogram be plotted ? (default FALSE)
+#'
+#' @details Draw males competitive values from conditional distribution of a bivariate normal distribution. (to detailed; could probably be easily extended to multivariate cases)
+#'
+#' After drawing, values are transformed such that all values are strictly above zero (i.e. x' = x + min(x) + 0.01).
+#' This is needed because these value are used later as probabilities. (that default behavior can be modified with the translation arg.)
+#' Note however this may change mean and variance of specified distribution !
+#'
+#' @return Vector of competitive values
+#'
+#' @importFrom graphics hist
+#'
+#' @export
+#'
+get_male_comp_values_from_feature = function(mean_comp_value,
+                                sd_comp_value,
+                                rho,
+                                feature,
+                                translation = TRUE,
+                                plot = FALSE){
+
+  mu_2 = mean(feature)
+  sigma_2 = var(feature)
+
+  mu_1 = mean_comp_value
+  sigma_1 = sd_comp_value^2
+
+  f_ = function(x) {
+    rnorm(1,
+          mean = mu_1+(sqrt(sigma_1)/sqrt(sigma_2))*rho*(x - mu_2),
+          sd = sqrt((1-rho^2)*sigma_1) )
+
+  }
+
+  male_comp = sapply(feature, f_)
+
+  if(any(male_comp < 0) & translation){
+    male_comp = male_comp - min(male_comp, 0) + 0.01
+    warning("Competitive values are shifted to be above zero (mean will increase and variance decrease)")
+  }
 
   if(plot) hist(male_comp, main = "Comp. values")
 

@@ -33,4 +33,5 @@ Produce a vector of competitive values
 Draw males competitive values from provided distribution (uniform by default).
 After drawing, values are transformed such that all values are strictly above zero (i.e. x' = x + min(x) + 0.01).
 This is needed because these value are used later as probabilities. (that default behavior can be modified with the translation arg.)
+Note however this may change mean and variance of specified distribution !
 }
