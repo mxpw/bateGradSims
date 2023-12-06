@@ -27,11 +27,9 @@ library(bateGradSims)
 
 - [x] Proposition pour lier nombre de gamètes et compétitivité pour les mâles (covariance positive, négative, nulle)
   - [x] Utiliser distributions conditionnelles (i.e. ~P(Y|X)) - nouvelle fonction get_male_xxx() ; le moyenne et variance de la distribution "jointe" (e.g. gametes par male) sont estimées empiriquement - option pour le spécifier ?
-- [ ] "Corrélation de parentalité" i.e. probabilité que deux graines tirées aléatoirement soient du même père (voir Dorken & Perry, 2017) 
+- [x] "Corrélation de parentalité" i.e. probabilité que deux graines tirées aléatoirement soient du même père (voir Dorken & Perry, 2017) 
   - [x] Version de base
   - [x] Version avec correction pour tailles de pop. 
-  - [ ] __Q__ Quelle valeur quand une unique graine (donc un male) ? 
-  - [ ] __Q__ Pop. average quand certaines femelle n'ont pas de graines ? (NaN pour la correlated parternity en l'état, on exclut ces femelles de la moyenne ?)
 - [ ] Implémenter la gestion auto. des plots des gradients
 	- [ ] Ajouter annotations (e.g., valeur de $\beta$, éventuellement $\Delta(\beta_{true}-\beta_{est})$)
 	- [ ] Attention - en l'état, ce ne sont pas les $\beta$ estimés qui sont représentés
@@ -44,11 +42,16 @@ library(bateGradSims)
 - [ ] Voir pour factoriser les bouts de codes communs dans les fonctions sampling_XXX()
 - [ ] Notes explicatives
   - [ ] Dirichlet & Multinomiale (pollen_export)
+  -> voir [ici](https://en.wikipedia.org/wiki/Dirichlet-multinomial_distribution) notamment pour les epressions d'espèrance, de variance et covariance. 
+  - possiblement, renvoyer une mesure d'entropie pour la distribution des alphas par mâle (i.e. mesure de la diversité de partenaires femelles atteint)
   - [ ] autres trucs
 
 
 ### Checks
 - [ ] Cas où pas d'ovule fécondé pour une femelle (NULL/integer(0)/NAN/0) ? (problèmatique gestion du code, et sens biologique)
+  - [ ] Pour le RS/MS
+  - [ ] pour les correlations de paternité
+- [ ] Quelle valeur de correlation de paternité si une seule graine ? (par defaut, selon la formule => NaN car division par zéro)
 - [ ] Question des arrondis - notamment pro-rata ; 10% sur 4 ovules -> 0.4 => 0 ou 1 ?
 - [ ] Check valeurs par défaut pour ms/rs (NA vs. 0)
 - [ ] Sampling chelou (x/mean(x)) - voir fonction sampling() + commentaire à la fin

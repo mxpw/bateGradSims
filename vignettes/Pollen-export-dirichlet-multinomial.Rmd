@@ -1,0 +1,23 @@
+---
+title: "Pollen export"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Pollen-export-dirichlet-multinomial}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+```{r setup}
+library(bateGradSims)
+```
+
+# Pollen export
+
+Pollen export is one of the main component of the simulation. Indeed, pollen export will define how males export their gametes on females. 
