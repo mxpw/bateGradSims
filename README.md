@@ -39,7 +39,7 @@ library(bateGradSims)
 - [x] Paternity share 
 - [ ] Extraire la partie qui créer la matrice des alpha de dirichlet de la fonction pollen export - sera plus flexible (permet de définir différentes méthodes pour créer la dite matrice voir d'en spécifier une à la main)
   - [ ] TODO - définir method
-- [ ] Voir pour factoriser les bouts de codes communs dans les fonctions sampling_XXX()
+- [x] Voir pour factoriser les bouts de codes communs dans les fonctions sampling_XXX()
 - [ ] Notes explicatives
   - [ ] Dirichlet & Multinomiale (pollen_export)
   -> voir [ici](https://en.wikipedia.org/wiki/Dirichlet-multinomial_distribution) notamment pour les epressions d'espèrance, de variance et covariance. 
