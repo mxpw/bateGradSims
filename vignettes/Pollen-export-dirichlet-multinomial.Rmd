@@ -1,23 +1,97 @@
 ---
-title: "Pollen export"
+title: "Pollen repartition"
+author: "DM"
 output: rmarkdown::html_vignette
 vignette: >
-  %\VignetteIndexEntry{Pollen-export-dirichlet-multinomial}
+  %\VignetteIndexEntry{Pollen repartition}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---
 
-```{r, include = FALSE}
-knitr::opts_chunk$set(
-  collapse = TRUE,
-  comment = "#>"
-)
-```
-
 ```{r setup}
-library(bateGradSims)
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyr)
+library(ggplot2)
+library(dplyr)
 ```
 
-# Pollen export
+# Modeling pollen export
 
-Pollen export is one of the main component of the simulation. Indeed, pollen export will define how males export their gametes on females. 
+Assuming a population with $M$ males and $F$ females, each male $1, .., m, .. M$ has $\delta_m$ gametes to export. The number of gamete per female is not involved here since the aim of the pollen export is to identify on which females males gametes land.
+
+### Panmictic case
+
+In the panmictic case, for a male ($m$), gametes are on average evenly exported on all females (i.e. follow a multinomial distribution : $N_1, ..., N_F \sim M(\boldsymbol{p}, \delta_m)$, with $\boldsymbol{p} = (p_1, ..., p_K)$ and $p_i = \frac{1}{F} = p, \forall i$).
+
+For each female, the expected number of gametes from male $m$ landing on stigma is given by $E(X_i) = \delta_m p_i$, the variance is given by $var(X_i) = \delta_m p_i (1-p_i)$ and $cov(X_i, X_j) = - \delta_m p_i p_j$ and therefore, in the panmictic case $E(X_i) = \delta_m p, \forall i$, $cov(X_i)=\delta_m p(1-p), \forall i$ and $cov(X_i, X_j) = - \delta_m p^2$.
+
+As gametes amount are usually high (i.e. $\delta_m \gg 0$), pollen repartition is quite deterministic, coefficient of variation is generally below 10% for $\delta_m \gt 1000$ (see Fig. 1A et B). It's important to note here that this variability can't be controlled using a Multinomial distribution, and is almost fully controlled by the number of male gametes ($\delta_m$).
+
+```{r, fig.width=10, fig.height=3, fig.align='center', echo=FALSE}
+
+n = c(1, 5, 10, 25, 50, 100, 250, 500, 1000, 1500, 2500, 5000, 10000)
+p = seq(0.05, 0.95, length.out = 20)
+
+cv_table = expand_grid(n, p) %>%
+  mutate(esperance = n*p,
+         variance = n*p*(1-p),
+         cv = sqrt(variance)/esperance)
+
+g1 = ggplot(cv_table, aes(x = n, y = p, fill = cv))+
+  geom_tile()+
+  scale_x_log10()+
+  scale_fill_gradient2(low = "blue", mid="lightblue", high="red", midpoint = 1,
+                        labels = scales::percent)+
+  labs(fill = "Var. coeff.")+
+  theme_bw()
+
+tbl_ = cv_table %>% 
+    group_by(n) %>% 
+    summarise(max_cv = max(cv, na.rm = T),
+              min_cv = min(cv, na.rm = T)) %>% pivot_longer(-n)
+
+g2 = ggplot(tbl_, aes(x = n, y = value, color = name))+
+  geom_line()+
+  theme_bw()+
+  scale_x_log10()+
+  scale_y_log10(labels = scales::percent)+
+  expand_limits(y = 0)+
+  scale_color_discrete(label=c('max(CV)','min(CV)'))+
+  labs(y = "Variation coeff.", color = "")
+
+cowplot::plot_grid(g1, g2)
+
+```
+
+However, using Dirichlet distribution in addition to Multinomial allows a finer control on heterogeneity. This Dirichlet-multinomial distribution (a compound distribution) is well defined, and presents interesting properties.
+
+In particular, it's now possible to control for the level of randomness (i.e. $var(X_i)$), meaning that in the panmictic case, one can allows either a fully deterministic pollen repartition (low $\alpha_0$) or a fully random pollen repartition (high $\alpha_0$).
+
+Indeed, whereas the expected number of gametes landing on one stigma for a given male is still given by $E(X_i)=\delta_m p_i$, the variance is now given by : $$var(X_i) = \delta_m p_i (1-p_i)(\frac{\delta_m+\sum a_k}{1+\sum a_k})$$ with $$ p_i = \frac{\alpha_i}{\sum \alpha_k}$$ and min/max cv are now independant of $\delta_m$. Note also than when $\alpha_0 \gg \delta_m$, $(\frac{n+\sum a_k}{1+\sum a_k}) \rightarrow 1$ and variances are similar to the multinomial case (when $\delta_m \rightarrow 1$). 
+
+Thus, overall variance can be control through the $\sum \alpha_k$, usually noted $\alpha_0$. Fig. FFF presents min and max variation coefficients for alternative $\alpha_0$ values. 
+
+```{r, echo = FALSE, fig.width=6, fig.height=3, fig.align='center', warning=FALSE, message=FALSE}
+
+alpha_zero = 10^seq(-6, 4, 1)
+n = c(100)
+cv_table = expand_grid(n, p, alpha_zero) %>%
+  mutate(esperance = n*p,
+         variance_dir = n*p*(1-p)*((n*alpha_zero)/(1+alpha_zero)),
+         cv = sqrt(variance_dir)/esperance)
+
+tbl_ = cv_table %>% 
+    group_by(alpha_zero, n) %>% 
+    summarise(max_cv = max(cv, na.rm = T),
+              min_cv = min(cv, na.rm = T)) %>% pivot_longer(c(-n, -alpha_zero))
+
+ ggplot(tbl_ %>% filter(n==100), aes(x = alpha_zero, y = value, color = name))+
+  geom_line()+
+  theme_bw()+
+  scale_x_log10()+
+  scale_y_log10(labels = scales::percent)+
+  scale_color_discrete(label=c('max(CV)','min(CV)'))+
+  expand_limits(y = 0)+
+  labs(y = "Variation coeff.", color = "")
+```
+
