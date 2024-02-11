@@ -1,29 +1,43 @@
-#' Sampling groundtruth
+#' Mating and reproductive success from sampled seeds
 #'
-#' Not sampling per se, compute exact RS/MS (genetic - i.e. in the sens of 'from fertilized eggs')
+#' Compute RS/MS (genetic - i.e. in the sens of 'from fertilized eggs')
 #'
-#' (Should be kept as an internal function ?)
 #'
-#' @param fertilized_eggs List of size n_females containing father for each fertilized eggs (from e.g., pollen_competition() function) (no default)
+#' @param fertilized_eggs List of size n_females containing father for each fertilized eggs (from e.g., pollen_competition() function)
+#' @param sampled_fertilized_eggs List of size n_females containing father for each fertilized eggs after samping (from any sampling functions)
 #' @param n_males Number of males (no default)
+#' @param paternity_share Should males RS be rescaled by total number of females eggs (default TRUE)
 #'
-#' @details Compute exact mating success (i.e. number of 'genetic' mates) and reproductive success (i.e. number of offspring) for males and females
+#' @details Compute mating success (i.e. number of 'genetic' mates) and reproductive success (i.e. number of offspring) for males and females.
+#' Paternity share is considered by default (see paternity_share argument), and females RS is always compute from all eggs (not sampled ones).
 #'
-#' @return List containing MS & RS for females and for males
+#' @return List containing MS & RS for females and males
 #'
 #' @export
 #'
 
-sampling_groundtruth = function( fertilized_eggs, n_males){
-  msg_female = unlist(lapply(fertilized_eggs, FUN = function(x) length(unique(x)) ))
+get_sexual_selection_components = function( fertilized_eggs, sampled_fertilized_eggs, n_males, paternity_share = TRUE){
+  msg_female = unlist(lapply(sampled_fertilized_eggs, FUN = function(x) length(unique(x)) ))
   rsg_female = unlist(lapply(fertilized_eggs, length))
 
   msg_male = rep(0, n_males)
   rsg_male = rep(0, n_males)
 
+  if(paternity_share){
+    print("Males RS is rescaled by total eggs count by female")
+    prop_sampled_eggs = unlist(lapply(sampled_fertilized_eggs, length)) / unlist(lapply(fertilized_eggs, length))
+    weights = 1 / prop_sampled_eggs
+    weights[is.infinite(weights) | is.na(weights)] = 0
+  }
+
   for(m in 1:n_males){
-    msg_male[m] = sum(unlist(lapply(fertilized_eggs, FUN = function(x) m %in% x )))
-    rsg_male[m] = sum(unlist(fertilized_eggs) == m)
+    msg_male[m] = sum(unlist(lapply(sampled_fertilized_eggs, FUN = function(x) m %in% x )))
+    rsg_male_by_female = unlist(lapply(sampled_fertilized_eggs, function(x) sum(x==m) ))
+
+    if(paternity_share){
+      rsg_male_by_female = rsg_male_by_female * weights
+    }
+    rsg_male[m] = sum(rsg_male_by_female)
   }
 
   return(list(msg_female = msg_female,
@@ -32,39 +46,51 @@ sampling_groundtruth = function( fertilized_eggs, n_males){
               rsg_male = rsg_male))
 }
 
+#' Sampling ground-truth
+#'
+#' Dummy/Convenience function - just return the input
+#'
+#' @param fertilized_eggs List of size n_females containing father for each fertilized eggs (from e.g., pollen_competition() function) (no default)
+#'
+#' @details Return the input list - use for generality purpose, same pipeline can be use than with other sampling methods.
+#'
+#' @return Sampled fertilized eggs
+#'
+#' @export
+#'
+sampling_groundtruth=function(fertilized_eggs){
+  fertilized_eggs
+}
+
+
 #' Fixed number sampling
 #'
 #' Samples females eggs using a fixed number (So call 'Fixed Strategy', see details)
-#'
-#' (Should be kept as an internal function ?)
 #'
 #' @param fertilized_eggs List of size n_females containing father for each fertilized eggs (from e.g., pollen_competition() function) (no default)
 #' @param n_males Number of males (no default)
 #' @param total_samples Total number of eggs to be sample (default 1000)
 #' @param by_female_samples Number of eggs to be sample by female (no default)
 #' @param undercount_female Which strategy to use when some females doesn't have enough eggs to be sample ? (see details, default 'remove')
-#' @param paternity_share Should males RS be rescaled by total number of females' eggs (default TRUE)
 #'
-#' @details Compute mating success (i.e. number of 'genetic' mates) and reproductive success (i.e. number of offspring) for males and females
-#' using a 'fixed number' strategy (i.e. a fixed number of eggs by female is sampled). This number is determined using either total_samples or by_female_samples argument
-#' (thus at least one should be provided if not using the default value. If both are provided, the by_female_samples will be used).
-#'
-#' Note that in all cases, the RS for females is computed using all eggs ! (should add another option here to allow this behavior to be changed ?)
+#' @details Sample eggs using a 'fixed number' strategy (i.e. a fixed number of eggs by female is sampled). This number is determined using either
+#' total_samples or by_female_samples argument (thus at least one should be provided if not using the default value. If both are provided,
+#' the by_female_samples will be used).
 #'
 #' In some cases, some females might not have enough eggs to sample. Two strategies can be used to consider these cases (i) 'remove' strategy,
 #' (ii) 'keep' strategy. The default 'remove' strategy doesn't consider females w/o enough eggs (will be NA in the output), the 'keep' strategy
 #' consider these females by sampling all their eggs.
 #'
-#' Paternity share is set to TRUE by default but can be changed. If False, males RS is not rescaled.
+#' In all cases, if target number of samples is not reached because some females haven't enough eggs, additional eggs are selected from others females (in a
+#' uniform and random way).
 #'
-#' @return List containing MS & RS for females and for males
+#' @return Sampled fertilized eggs
 #'
 #' @export
 #'
 
 sampling_fixed = function( fertilized_eggs, n_males, total_samples = 1000,
-                           by_female_samples = NULL, undercount_female = 'remove',
-                           paternity_share = TRUE){
+                           by_female_samples = NULL, undercount_female = 'remove'){
 
   n_females = length(fertilized_eggs)
 
@@ -77,10 +103,14 @@ sampling_fixed = function( fertilized_eggs, n_males, total_samples = 1000,
   if(sample_by_female < 1)
     stop("Samples by female should be >= 1")
 
-  print(paste0(sample_by_female, " eggs will be sampled by female"))
+  total_to_sample = sample_by_female * n_females
 
+  print(paste0(sample_by_female, " eggs will (theoretically) be sampled by female (for a total of ",total_to_sample," eggs)"))
 
   total_eggs = sum(unlist(lapply(fertilized_eggs, length)))
+
+  if(total_eggs < total_to_sample)
+    stop(paste0("Target sample (",total_to_sample,") is not feasible (total eggs is ", total_eggs ,")"))
 
   # Keep track of females w/o enough eggs
   female_to_remove = rep(F, n_females)
@@ -89,57 +119,59 @@ sampling_fixed = function( fertilized_eggs, n_males, total_samples = 1000,
     print(paste0("Some female(s) don't have enough eggs ! Use strategy '",undercount_female,"'"))
 
     if(undercount_female == 'keep'){
+
+      undercounts = sapply(fertilized_eggs, length) - sample_by_female
+      n_undercounts = sum(undercounts < 0)
+      additional_eggs = -sum(undercounts[undercounts < 0])
+      excess_sample_by_female = ceiling( additional_eggs / (n_females - n_undercounts) )
+
+      updated_sample_by_female = sample_by_female + excess_sample_by_female
+
       fertilized_eggs_reduced = lapply(fertilized_eggs,
-                                   FUN = function(x) sample_handmade(x, size = sample_by_female) )
+                                   FUN = function(x) sample_handmade(x, size = updated_sample_by_female) )
 
     }else if(undercount_female == 'remove'){
-      fertilized_eggs_reduced = lapply(fertilized_eggs,
-                                   FUN = function(x) {
-                                     if(length(x) >= sample_by_female)
-                                       sample_handmade(x, size = sample_by_female)
-                                     else
-                                       NULL
-                                   })
 
       female_to_remove = unlist(lapply(fertilized_eggs, length)) < sample_by_female
       print(paste0("Female(s) removed from dataset : ",sum(female_to_remove)," idv(s) (",100*sum(female_to_remove)/length(female_to_remove),"%)"))
 
+      n_undercounts = sum(female_to_remove)
+      additional_eggs = n_undercounts * sample_by_female
+      excess_sample_by_female = ceiling( additional_eggs / (n_females - n_undercounts) )
+      updated_sample_by_female = sample_by_female + excess_sample_by_female
+
+      total_eggs = sum(unlist(lapply(fertilized_eggs[!female_to_remove], length)))
+
+      if(total_eggs < total_to_sample)
+        stop(paste0("Target sample (",total_to_sample,") is not feasible (total eggs after removing some females is ", total_eggs ,")"))
+
+      fertilized_eggs_reduced = lapply(fertilized_eggs,
+                                   FUN = function(x) {
+                                     if(length(x) >= sample_by_female)
+                                       sample_handmade(x, size = updated_sample_by_female)
+                                     else
+                                       NULL
+                                   })
+
     }else{
-      print(paste0("Strategy ", undercount_female, "doesn't exists !"))
+      stop(paste0("Strategy ", undercount_female, "doesn't exists !"))
     }
+
+    # Clear excess samples
+    by_females_sampled_eggs = sapply(fertilized_eggs_reduced, length)
+    while( sum(by_females_sampled_eggs) > total_to_sample ){
+      max_ = max(by_females_sampled_eggs)
+      random_idv = sample(which(by_females_sampled_eggs == max_), 1)
+      fertilized_eggs_reduced[[random_idv]] = sample(fertilized_eggs_reduced[[random_idv]], size = max_ - 1)
+      by_females_sampled_eggs = sapply(fertilized_eggs_reduced, length)
+    }
+
   }else{
     fertilized_eggs_reduced = lapply(fertilized_eggs,
                                  FUN = function(x) sample(x, size = sample_by_female, replace = FALSE) )
   }
 
-  msg_female = unlist(lapply(fertilized_eggs_reduced, FUN = function(x) length(unique(x)) ))
-  rsg_female = unlist(lapply(fertilized_eggs, length)) # Compute on non-reduced dataset
-
-  msg_female[female_to_remove] = NA
-  rsg_female[female_to_remove] = NA
-
-  if(paternity_share){
-    print("Males RS is rescaled by total eggs count by female")
-    prop_sampled_eggs = unlist(lapply(fertilized_eggs_reduced, length)) / rsg_female
-    weights = 1 / prop_sampled_eggs
-    weights[is.infinite(weights) | is.na(weights)] = 0
-  }
-
-  msg_male = rep(0, n_males)
-  rsg_male = rep(0, n_males)
-  for(m in 1:n_males){
-    msg_male[m] = sum(unlist(lapply(fertilized_eggs_reduced, FUN = function(x) m %in% x )))
-    rsg_male_by_female = unlist(lapply(fertilized_eggs_reduced, function(x) sum(x==m) ))
-
-    if(paternity_share){
-      rsg_male_by_female = rsg_male_by_female * weights
-    }
-    rsg_male[m] = sum(rsg_male_by_female)
-  }
-  return(list(msg_female = msg_female,
-              rsg_female = rsg_female,
-              msg_male = msg_male,
-              rsg_male = rsg_male))
+ fertilized_eggs_reduced
 }
 
 #' Prorata sampling
@@ -156,15 +188,11 @@ sampling_fixed = function( fertilized_eggs, n_males, total_samples = 1000,
 #' @param undercount_female Which strategy to use when some females doesn't have enough eggs to be sample ? (see details, default 'remove')
 #' @param upsample_strategy Which strategy to use ........
 #' @param upsampling_plot Should upsampling effects (i.e. deviations from exact proportions) be plotted ? (default FALSE)
-#' @param paternity_share Should males RS be rescaled by total number of females' eggs (default TRUE)
 #'
-#' @details Compute mating success (i.e. number of 'genetic' mates) and reproductive success (i.e. number of offspring) for males and females
-#' using a 'Prorata' strategy (i.e. sample eggs by female proportionally to their total eggs count).
+#' @details Sample eggs using a 'Prorata' strategy (i.e. sample eggs by female proportionally to their total eggs count).
 #' This proportion is determined using either total_samples or directly by_female_prop argument
 #' (thus at least one should be provided if not using the default value. If both are provided, the by_female_prop will be used).
 #' When computing the number of eggs to be sampled, the value is rounded.
-#'
-#' Note that in all cases, the RS for females is computed using all eggs ! (should add another option here to allow this behavior to be changed ?)
 #'
 #' In some cases, some females might not have enough eggs to sample.
 #' Two cases can be distinguished: (a) total eggs * proportion to be sampled < min_threshold and total eggs < min_threshold,
@@ -191,10 +219,8 @@ sampling_fixed = function( fertilized_eggs, n_males, total_samples = 1000,
 #'
 #' What to do when theo_perc * total eggs ~ e.g., 0.3 (e.g. an idv with 4 eggs, and theo_prec = 1\%) - take at least one, or not ?
 #'
-#' Paternity share is set to TRUE by default but can be changed. If False, males RS is not rescaled.
 #'
-#'
-#' @return List containing MS & RS for females and for males
+#' @return Sampled fertilized eggs
 #'
 #' @importFrom graphics points
 #' @export
@@ -202,8 +228,7 @@ sampling_fixed = function( fertilized_eggs, n_males, total_samples = 1000,
 
 sampling_prorata = function(fertilized_eggs, n_males, total_samples = 1000, by_female_prop = NULL,
                            min_threshold = 0, undercount_female = 'remove', upsample_strategy = 's1',
-                           upsampling_plot = FALSE,
-                           paternity_share = TRUE){
+                           upsampling_plot = FALSE){
 
   n_females = length(fertilized_eggs)
 
@@ -341,123 +366,45 @@ sampling_prorata = function(fertilized_eggs, n_males, total_samples = 1000, by_f
 
   print(paste0("Number of fruits to be genotyped = ", length(unlist(fertilized_eggs_reduced))))
 
-  msg_female = unlist(lapply(fertilized_eggs_reduced, FUN = function(x) length(unique(x)) ))
-  rsg_female = unlist(lapply(fertilized_eggs, length)) # Compute on non-reduced dataset !
-
-  msg_female[female_to_remove] = NA
-  rsg_female[female_to_remove] = NA
-
-  if(paternity_share){
-    print("Males RS is rescaled by total eggs count by female")
-    prop_sampled_eggs = unlist(lapply(fertilized_eggs_reduced, length)) / rsg_female
-    weights = 1 / prop_sampled_eggs
-    weights[is.infinite(weights) | is.na(weights)] = 0
-  }
-
-  msg_male = rep(0, n_males)
-  rsg_male = rep(0, n_males)
-  for(m in 1:n_males){
-    msg_male[m] = sum(unlist(lapply(fertilized_eggs_reduced, FUN = function(x) m %in% x )))
-    rsg_male_by_female = unlist(lapply(fertilized_eggs_reduced, function(x) sum(x==m) ))
-
-    if(paternity_share){
-      rsg_male_by_female = rsg_male_by_female * weights
-    }
-    rsg_male[m] = sum(rsg_male_by_female)
-  }
-
-  return(list(msg_female = msg_female,
-              rsg_female = rsg_female,
-              msg_male = msg_male,
-              rsg_male = rsg_male))
+  fertilized_eggs_reduced
 }
 
 #' Random sampling
 #'
 #' Samples eggs randomly (i.e. independently of female identity, see details)
 #'
-#' (Should be kept as an internal function ?)
 #'
 #' @param fertilized_eggs List of size n_females containing father for each fertilized eggs (from e.g., pollen_competition() function) (no default)
 #' @param n_males Number of males (no default)
 #' @param total_samples Total number of eggs to be sample (default 1000)
-#' @param paternity_share (default TRUE)
 #'
-#' @details Compute mating success (i.e. number of 'genetic' mates) and reproductive success (i.e. number of offspring) for males and females
-#' using a fully random strategy. A given number of eggs (total_samples) is randomly chosen, then parents identity is checked to compute MS/RS for males
-#' et MS for females.
+#' @details Sample eggs using a fully random strategy. A given number of eggs (total_samples) is randomly chosen
 #'
-#' Paternity share is set to TRUE by default but can be changed. If False, males RS is not rescaled.
-#'
-#' Note that in all cases, the RS for females is computed using all eggs ! (should add another option here to allow this behavior to be changed ?)
-#'
-#'
-#' @return List containing MS & RS for females and for males
-#'
-#' @importFrom magrittr %>%
-#' @importFrom tibble tibble as_tibble rownames_to_column
-#' @importFrom dplyr n_distinct n summarise group_by
+#' @return Sampled fertilized eggs
 #'
 #' @export
 #'
 
-sampling_random = function( fertilized_eggs, n_males, total_samples = 1000, paternity_share = TRUE ){
+sampling_random = function( fertilized_eggs, n_males, total_samples = 1000){
 
   n_females = length(fertilized_eggs)
+  weights_ = sapply(fertilized_eggs, length)
 
-  # Make descendant centered results
-  males_ = unlist(fertilized_eggs)
-  females_ = c()
-  for(f in 1:n_females)
-    females_ = c(females_, rep(f, length(fertilized_eggs[[f]])) )
+  if(total_samples > sum(weights_))
+    stop(paste0("Target sample (",total_samples,") is not feasible (total eggs is ", sum(weights_) ,")"))
 
-  spl = cbind(females_, males_)[sample(1:length(males_), size = total_samples),] %>% as_tibble()
+  fertilized_eggs_reduced = vector("list", n_females)
 
-  # Female RSg (from # of descendant)
-  rsg_female_rd = unlist(lapply(fertilized_eggs, length)) # Compute on non-reduced dataset !
-
-  if(paternity_share){
-    print("Males RS is rescaled by total eggs count by female")
-    rsg_sampling = spl %>% select(-males_) %>% group_by(.data$females_) %>% count()
-    sampled_eggs_count = rep(0, n_females)
-    for( i in 1:nrow(rsg_sampling))
-      sampled_eggs_count[ rsg_sampling[[i, "females_"]] ] = rsg_sampling[[i, "n"]]
-
-    prop_sampled_eggs = sampled_eggs_count / rsg_female_rd
-    weights = 1 / prop_sampled_eggs
-    weights[is.infinite(weights)] = 0
-  }else{
-    weights = 1
+  for(drawn in 1:total_samples){
+    random_female = sample(1:n_females, size = 1, prob = weights_)
+    random_idx_from_female = sample(1:length(fertilized_eggs[[random_female]]), 1)
+    fertilized_eggs_reduced[[random_female]] = c(fertilized_eggs_reduced[[random_female]],
+                                                 fertilized_eggs[[random_female]][random_idx_from_female])
+    fertilized_eggs[[random_female]] = fertilized_eggs[[random_female]][-random_idx_from_female]
+    weights_[random_female] = weights_[random_female] - 1
   }
 
-  # Female MSg
-  female_gb = spl %>% group_by(.data$females_) %>% summarise(ms = n_distinct(.data$males_))
-
-  msg_female_rd = rep(0, n_females)
-  for(i in 1:nrow(female_gb))
-    msg_female_rd[ female_gb[[i, 1]] ] = female_gb[[i, 'ms']]
-
-  # Male MSg/RSg
-
-  # Add weights (needed for paternity share computation)
-  spl = spl %>%
-    left_join(
-      tibble(id = 1:n_females, weights = weights),
-      by = c('females_' = 'id')
-    )
-
-  male_gb = spl %>% group_by(.data$males_) %>% summarise(ms = n_distinct(.data$females_), rs = sum(.data$weights))
-  msg_male_rd = rep(0, n_males)
-  rsg_male_rd = rep(0, n_males)
-  for(i in 1:nrow(male_gb)){
-    msg_male_rd[ male_gb[[i, 1]] ] = male_gb[[i, 'ms']]
-    rsg_male_rd[ male_gb[[i, 1]] ] = male_gb[[i, 'rs']]
-  }
-
-  return(list(msg_female = msg_female_rd,
-              rsg_female = rsg_female_rd,
-              msg_male = msg_male_rd,
-              rsg_male = rsg_male_rd))
+  fertilized_eggs_reduced
 
 }
 

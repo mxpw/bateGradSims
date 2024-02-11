@@ -9,8 +9,7 @@ sampling_fixed(
   n_males,
   total_samples = 1000,
   by_female_samples = NULL,
-  undercount_female = "remove",
-  paternity_share = TRUE
+  undercount_female = "remove"
 )
 }
 \arguments{
@@ -23,27 +22,22 @@ sampling_fixed(
 \item{by_female_samples}{Number of eggs to be sample by female (no default)}
 
 \item{undercount_female}{Which strategy to use when some females doesn't have enough eggs to be sample ? (see details, default 'remove')}
-
-\item{paternity_share}{Should males RS be rescaled by total number of females' eggs (default TRUE)}
 }
 \value{
-List containing MS & RS for females and for males
+Sampled fertilized eggs
 }
 \description{
 Samples females eggs using a fixed number (So call 'Fixed Strategy', see details)
 }
 \details{
-(Should be kept as an internal function ?)
-
-Compute mating success (i.e. number of 'genetic' mates) and reproductive success (i.e. number of offspring) for males and females
-using a 'fixed number' strategy (i.e. a fixed number of eggs by female is sampled). This number is determined using either total_samples or by_female_samples argument
-(thus at least one should be provided if not using the default value. If both are provided, the by_female_samples will be used).
-
-Note that in all cases, the RS for females is computed using all eggs ! (should add another option here to allow this behavior to be changed ?)
+Sample eggs using a 'fixed number' strategy (i.e. a fixed number of eggs by female is sampled). This number is determined using either
+total_samples or by_female_samples argument (thus at least one should be provided if not using the default value. If both are provided,
+the by_female_samples will be used).
 
 In some cases, some females might not have enough eggs to sample. Two strategies can be used to consider these cases (i) 'remove' strategy,
 (ii) 'keep' strategy. The default 'remove' strategy doesn't consider females w/o enough eggs (will be NA in the output), the 'keep' strategy
 consider these females by sampling all their eggs.
 
-Paternity share is set to TRUE by default but can be changed. If False, males RS is not rescaled.
+In all cases, if target number of samples is not reached because some females haven't enough eggs, additional eggs are selected from others females (in a
+uniform and random way).
 }

@@ -2,23 +2,19 @@
 % Please edit documentation in R/sampling_strategies.R
 \name{sampling_groundtruth}
 \alias{sampling_groundtruth}
-\title{Sampling groundtruth}
+\title{Sampling ground-truth}
 \usage{
-sampling_groundtruth(fertilized_eggs, n_males)
+sampling_groundtruth(fertilized_eggs)
 }
 \arguments{
 \item{fertilized_eggs}{List of size n_females containing father for each fertilized eggs (from e.g., pollen_competition() function) (no default)}
-
-\item{n_males}{Number of males (no default)}
 }
 \value{
-List containing MS & RS for females and for males
+Sampled fertilized eggs
 }
 \description{
-Not sampling per se, compute exact RS/MS (genetic - i.e. in the sens of 'from fertilized eggs')
+Dummy/Convenience function - just return the input
 }
 \details{
-(Should be kept as an internal function ?)
-
-Compute exact mating success (i.e. number of 'genetic' mates) and reproductive success (i.e. number of offspring) for males and females
+Return the input list - use for generality purpose, same pipeline can be use than with other sampling methods.
 }

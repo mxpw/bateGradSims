@@ -28,8 +28,7 @@ Pollen competition to access 'eggs'
 }
 \details{
 Draw males identity for each fertilized eggs according to male comp. values (draw w/o replacement).
-Pollen limitation (i.e. all eggs are not necessary fertilized - if pollen load is to low) is handled by the function - statistics can be displayed
-by setting pollen_limitation_stats arguments to TRUE.
+Pollen limitation (i.e. all eggs are not necessary fertilized - if pollen load is to low) is handled by the function.
 
 Note: more complex competition schemes could be considered in the future (e.g. (in)compatibilities, phenomenological equivalent of (dis)assortative mating,
 equivalent of phenological (dis)matches or kind of preemption effects(?)).
