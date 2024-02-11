@@ -4,7 +4,7 @@
 \alias{sampling_groundtruth}
 \title{Sampling ground-truth}
 \usage{
-sampling_groundtruth(fertilized_eggs)
+sampling_groundtruth(fertilized_eggs, ...)
 }
 \arguments{
 \item{fertilized_eggs}{List of size n_females containing father for each fertilized eggs (from e.g., pollen_competition() function) (no default)}
