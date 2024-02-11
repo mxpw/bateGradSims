@@ -8,7 +8,7 @@ pollen_competition(
   pollen_repartition,
   males_comp_values,
   gametes_by_female,
-  pollen_limitation_stats = FALSE
+  pollen_limitation_stats = TRUE
 )
 }
 \arguments{
@@ -18,7 +18,7 @@ pollen_competition(
 
 \item{gametes_by_female}{Vector of number of gametes by females (e.g., from gametes_drawing() function) (no default)}
 
-\item{pollen_limitation_stats}{(logical) Should statistics on pollen limitation be printed ? (default False)}
+\item{pollen_limitation_stats}{(logical) Should statistics on pollen limitation be printed ? (default TRUE)}
 }
 \value{
 List of size n_females, each element being a vector of males IDs corresponding to fertilized eggs

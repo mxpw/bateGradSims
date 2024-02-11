@@ -70,7 +70,7 @@ gametes_drawing = function(n_females = 100, n_males = 100, mean_gamete_female = 
 #' @param translation Should the resulting comp. value be translated to be > 0 ? (default TRUE)
 #' @param plot      Should the comp. value histogram be plotted ? (default FALSE)
 #'
-#' @details Draw males competitive values from provided distribution (uniform by default).
+#' @details Draw males competitive values from provided distribution (uniform by default) - the function e.g. sample, rnorm, etc. not a string.
 #' After drawing, values are transformed such that all values are strictly above zero (i.e. x' = x + min(x) + 0.01).
 #' This is needed because these value are used later as probabilities. (that default behavior can be modified with the translation arg.)
 #' Note however this may change mean and variance of specified distribution !
@@ -109,7 +109,7 @@ get_male_comp_values = function(n_males = 100,
 #' @param rho Correlation between competitive values and provided feature
 #' @param feature Vector of size n_males with
 #' @param translation Should the resulting comp. value be translated to be > 0 ? (default TRUE)
-#' @param plot      Should the comp. value histogram be plotted ? (default FALSE)
+#' @param plots Should the comp. value histogram and link between feature and comp. values be plotted ? (default FALSE)
 #'
 #' @details Draw males competitive values from conditional distribution of a bivariate normal distribution. (to detailed; could probably be easily extended to multivariate cases)
 #'
@@ -120,6 +120,8 @@ get_male_comp_values = function(n_males = 100,
 #' @return Vector of competitive values
 #'
 #' @importFrom graphics hist
+#' @importFrom graphics par
+#' @importFrom stats var
 #'
 #' @export
 #'
@@ -128,7 +130,7 @@ get_male_comp_values_from_feature = function(mean_comp_value,
                                 rho,
                                 feature,
                                 translation = TRUE,
-                                plot = FALSE){
+                                plots = FALSE){
 
   mu_2 = mean(feature)
   sigma_2 = var(feature)
@@ -150,7 +152,11 @@ get_male_comp_values_from_feature = function(mean_comp_value,
     warning("Competitive values are shifted to be above zero (mean will increase and variance decrease)")
   }
 
-  if(plot) hist(male_comp, main = "Comp. values")
+  if(plots) {
+    par(mfrow = c(1, 2))
+    hist(male_comp, main = "Comp. values")
+    plot(feature, male_comp)
+  }
 
   if(any(male_comp < 0)) warning("Some comp. values are negatives - error will arise when using pollen_competition() function if not corrected")
 
@@ -294,7 +300,7 @@ pollen_export = function(n_females = NULL, baseline_alpha = NULL,
 #' @param pollen_repartition      Matrix females X males with number of male gametes by females (e.g., from pollen_export() function) (no default)
 #' @param males_comp_values       Males competitive values (e.g., from get_male_comp_values() function ) (no default)
 #' @param gametes_by_female       Vector of number of gametes by females (e.g., from gametes_drawing() function) (no default)
-#' @param pollen_limitation_stats (logical) Should statistics on pollen limitation be printed ? (default False)
+#' @param pollen_limitation_stats (logical) Should statistics on pollen limitation be printed ? (default TRUE)
 #'
 #' @details Draw males identity for each fertilized eggs according to male comp. values (draw w/o replacement).
 #' Pollen limitation (i.e. all eggs are not necessary fertilized - if pollen load is to low) is handled by the function - statistics can be displayed
@@ -308,7 +314,7 @@ pollen_export = function(n_females = NULL, baseline_alpha = NULL,
 #' @export
 #'
 
-pollen_competition = function(pollen_repartition, males_comp_values, gametes_by_female, pollen_limitation_stats = FALSE){
+pollen_competition = function(pollen_repartition, males_comp_values, gametes_by_female, pollen_limitation_stats = TRUE){
   # Wonder whether it might be possible to vectorized that one
   female_desc = list()
   n_female = dim(pollen_repartition)[1]
@@ -332,9 +338,22 @@ pollen_competition = function(pollen_repartition, males_comp_values, gametes_by_
   }
 
   if(pollen_limitation_stats){
-    print("Pollen limitation : XXXXXXXX TO DO XXXXXXXXXX")
-    # TODO : compute % of non-fertilized eggs by females
-    # TODO : other stats ?
+    print("==== Pollen limitation ====")
+    unfertilized_eggs = gametes_by_female - sapply(female_desc, length)
+    if ( any(unfertilized_eggs > 0) ){
+
+      females_with_pollen_limitation = sum(unfertilized_eggs > 0)
+      female_percent = round( 100 * females_with_pollen_limitation / length(gametes_by_female), 2)
+      print("Not all eggs were fertilized")
+      print(paste0("=> Among females, ", females_with_pollen_limitation ," (", female_percent ,"%) doesn't have all their eggs fertilized"))
+
+      eggs_unfertilized = sum(unfertilized_eggs)
+      egg_percent = round( eggs_unfertilized / sum(gametes_by_female) , 2)
+      print(paste0("=> Overall, ", eggs_unfertilized ," (", egg_percent ,"%) eggs haven't been fertilized"))
+
+    }else{
+      print("No pollen limitation (all eggs are fertilized")
+    }
   }
 
   female_desc

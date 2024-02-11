@@ -10,7 +10,7 @@ get_male_comp_values_from_feature(
   rho,
   feature,
   translation = TRUE,
-  plot = FALSE
+  plots = FALSE
 )
 }
 \arguments{
@@ -24,7 +24,7 @@ get_male_comp_values_from_feature(
 
 \item{translation}{Should the resulting comp. value be translated to be > 0 ? (default TRUE)}
 
-\item{plot}{Should the comp. value histogram be plotted ? (default FALSE)}
+\item{plots}{Should the comp. value histogram and link between feature and comp. values be plotted ? (default FALSE)}
 }
 \value{
 Vector of competitive values
