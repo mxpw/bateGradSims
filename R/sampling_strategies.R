@@ -58,7 +58,7 @@ get_sexual_selection_components = function( fertilized_eggs, sampled_fertilized_
 #'
 #' @export
 #'
-sampling_groundtruth=function(fertilized_eggs){
+sampling_groundtruth=function(fertilized_eggs, ...){
   fertilized_eggs
 }
 
@@ -469,7 +469,8 @@ sampling = function(fertilized_eggs, n_males, methods = NULL, scaled = TRUE, mso
 
   for(m in 1:length(methods)){
     for(r in 1:n_rep){
-      spl = do.call( methods[[m]]$method, c(list(fertilized_eggs, n_males), methods[[m]]$params) )
+      sampled_fertilized_eggs = do.call( methods[[m]]$method, c(list(fertilized_eggs, n_males), methods[[m]]$params) )
+      spl = get_sexual_selection_components(fertilized_eggs, sampled_fertilized_eggs, n_males)
       tmp = tibble(mso = mso_vec,
                    msg = c(spl$msg_female, spl$msg_male),
                    rsg = c(spl$rsg_female, spl$rsg_male),
