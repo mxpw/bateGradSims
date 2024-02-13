@@ -51,6 +51,7 @@ get_sexual_selection_components = function( fertilized_eggs, sampled_fertilized_
 #' Dummy/Convenience function - just return the input
 #'
 #' @param fertilized_eggs List of size n_females containing father for each fertilized eggs (from e.g., pollen_competition() function) (no default)
+#' @param ... added for convenience
 #'
 #' @details Return the input list - use for generality purpose, same pipeline can be use than with other sampling methods.
 #'
@@ -425,11 +426,12 @@ sampling_random = function( fertilized_eggs, n_males, total_samples = 1000){
 #' User defined function can also be used here ; two constraints : (i) first two arguments must be 'fertilized_eggs' and 'n_males', others can be
 #' anything defined by the user, (ii) the function must return list with four elements : msg_female, rsg_female, msg_male, rsg_male.
 #'
-#' @return MS (obs), MS (gen), RS (gen), gamete counts, sex, sampling_method, parameters used for the sampling method, and replicate IDs
+#' @return Dataframe with MS (obs), MS (gen), RS (gen), gamete counts, sex, sampling_method, parameters used for the sampling method, and replicate IDs
 #'
 #' @importFrom magrittr %>%
 #' @importFrom tibble tibble
 #' @importFrom dplyr group_by ungroup mutate across
+#' @importFrom rlang .data
 #'
 #' @examples
 #' \dontrun{
@@ -467,6 +469,20 @@ sampling = function(fertilized_eggs, n_males, methods = NULL, scaled = TRUE, mso
     gam_vec = NA
   }
 
+  # Get true MS/RS (no sampling)
+  sampled_fertilized_eggs = sampling_groundtruth(fertilized_eggs)
+  spl = get_sexual_selection_components(fertilized_eggs, sampled_fertilized_eggs, n_males)
+  tmp = tibble(mso = mso_vec,
+               msg = c(spl$msg_female, spl$msg_male),
+               rsg = c(spl$rsg_female, spl$rsg_male),
+               n_gam = gam_vec,
+               sex = c(rep("F", n_females), rep("M", n_males)),
+               sampling_method = "base",
+               parameters = list(list()),
+               parameters_string = "",
+               replicate = 1)
+  output = rbind(output, tmp)
+
   for(m in 1:length(methods)){
     for(r in 1:n_rep){
       sampled_fertilized_eggs = do.call( methods[[m]]$method, c(list(fertilized_eggs, n_males), methods[[m]]$params) )
@@ -495,6 +511,29 @@ sampling = function(fertilized_eggs, n_males, methods = NULL, scaled = TRUE, mso
 }
 
 
+#' Descriptive stats on MS/RS
+#'
+#' Compute descriptive statistics on MS/RS for all sampling method (including groundtruth) for each replicate
+#'
+#' @param ms_rs_from_sampling Dataframe with detailled MS/RS (from sampling() function)
+#'
+#' @details Return per sex, per sampling method and per replicate mean and std for MSo, MSg and RSg.
+#'
+#' @return Vector of size n_female with $r_p$ for each female.
+#'
+#' @importFrom dplyr group_by ungroup summarise across
+#' @importFrom rlang .data
+#'
+#' @export
+#'
+descriptive_stats = function(ms_rs_from_sampling){
+  ms_rs_from_sampling %>% group_by(.data$sex, .data$sampling_method, .data$parameters_string, .data$replicate) %>%
+    summarise(across(.data$mso:.data$rsg,  list(mean = ~ mean(.x, na.rm = T),
+                                           sd = ~ sd(.x, na.rm = T))))
+}
+
+
+
 #' Correlated paternity
 #'
 #' Compute detailed paternity correlations (i.e. by female $r_p$)
@@ -512,6 +551,8 @@ correlated_paternity = function(fertilized_eggs){
 }
 
 #' Correlated paternity (internal function)
+#'
+#' @param female_seed_set female seed set
 
 rp_calculation = function(female_seed_set){
   count_by_male = table(female_seed_set)

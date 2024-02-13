@@ -6,6 +6,9 @@
 \usage{
 rp_calculation(female_seed_set)
 }
+\arguments{
+\item{female_seed_set}{female seed set}
+}
 \description{
 Correlated paternity (internal function)
 }
