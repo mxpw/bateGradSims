@@ -30,7 +30,7 @@ sampling(
 \item{n_rep}{Number of time each sampling method shoud be replicated (default 1)}
 }
 \value{
-MS (obs), MS (gen), RS (gen), gamete counts, sex, sampling_method, parameters used for the sampling method, and replicate IDs
+Dataframe with MS (obs), MS (gen), RS (gen), gamete counts, sex, sampling_method, parameters used for the sampling method, and replicate IDs
 }
 \description{
 Convenient wrapper around sampling strategies with convenient output format
