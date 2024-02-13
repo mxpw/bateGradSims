@@ -438,11 +438,11 @@ fit_gradients = function(samples, family = 'gaussian'){
 
   # Get slopes
   glms = glms %>% mutate(slopes_noGamControl = list(tibble(sex = c('F', 'M'),
-                                                           slopes = c( lm_noGamControl$coefficients[['msg']], lm_noGamControl$coefficients[['msg:sexM']] ))))
+                                                           slopes = c( .data$lm_noGamControl$coefficients[['msg']], .data$lm_noGamControl$coefficients[['msg:sexM']] ))))
 
   if(n_gam_available)
     glms = glms %>% mutate(slopes_gamControl = list(tibble(sex = c('F', 'M'),
-                                                           slopes = c( lm_gamControl$coefficients[['msg']], lm_gamControl$coefficients[['msg:sexM']] ))))
+                                                           slopes = c( .data$lm_gamControl$coefficients[['msg']], .data$lm_gamControl$coefficients[['msg:sexM']] ))))
 
   # Compute deltas
   base_noGamControl = (glms %>% filter(.data$sampling_method == 'base') %>% pull(.data$slopes_noGamControl))[[1]]
