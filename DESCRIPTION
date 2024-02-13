@@ -8,11 +8,12 @@ Description: More about what it does (maybe more than one line)
     Use four spaces when indenting paragraphs within the Description.
 License: MIT + file LICENSE
 Imports:
-  stats, graphics, gtools, cowplot, ggplot2, magrittr, tibble, tidyr, dplyr, tidyselect, purrr, scales
+  stats, graphics, gtools, cowplot, ggplot2, magrittr, tibble, tidyr, dplyr, tidyselect, purrr, rlang
 Encoding: UTF-8
 LazyData: true
 RoxygenNote: 7.1.2
 Suggests: 
     knitr,
-    rmarkdown
+    rmarkdown,
+    scales
 VignetteBuilder: knitr
