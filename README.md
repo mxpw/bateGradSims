@@ -33,7 +33,7 @@ library(bateGradSims)
 - [ ] Implémenter la gestion auto. des plots des gradients
 	- [ ] Ajouter annotations (e.g., valeur de $\beta$, éventuellement $\Delta(\beta_{true}-\beta_{est})$)
 	- [ ] Attention - en l'état, ce ne sont pas les $\beta$ estimés qui sont représentés
-- [ ] Ajout statistiques descriptives sur MS/RS (moyennes et variances) - sur les échantillons ainsi que sur les RS/MS vrais
+- [x] Ajout statistiques descriptives sur MS/RS (moyennes et variances) - sur les échantillons ainsi que sur les RS/MS vrais
 - [x] Bootstrap des tirages
 	- [x] Revoir la fonction sampling pour intégrer par défaut le groundtruth() (et ne pas le répliquer...)
 - [x] Paternity share 
