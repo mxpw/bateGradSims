@@ -8,7 +8,6 @@ sampling(
   fertilized_eggs,
   n_males,
   methods = NULL,
-  scaled = TRUE,
   mso = NULL,
   gametes = NULL,
   n_rep = 1
@@ -20,8 +19,6 @@ sampling(
 \item{n_males}{Number of males (no default)}
 
 \item{methods}{List of lists containing methods to use and associated parameters (see examples)}
-
-\item{scaled}{Should the MS/RS should be scaled ? (default TRUE)}
 
 \item{mso}{MS obtained directly from observations (i.e. pollen repartition over females before pollen competition) (from ms_obs() function, not required)}
 
@@ -36,8 +33,9 @@ Dataframe with MS (obs), MS (gen), RS (gen), gamete counts, sex, sampling_method
 Convenient wrapper around sampling strategies with convenient output format
 }
 \details{
-Run all required sampling methods with associated parameters n_rep time each. Results can be scaled by sex, methods & methods parameters.
-User defined function can also be used here ; two constraints : (i) first two arguments must be 'fertilized_eggs' and 'n_males', others can be
+Run all required sampling methods with associated parameters n_rep time each.
+
+User defined function can also be used here ; two constraints : (i) first two arguments must be 'fertilized_eggs' and 'n_males' (can be made optional, see the internal sampling_groundtruth() for an example), others can be
 anything defined by the user, (ii) the function must return list with four elements : msg_female, rsg_female, msg_male, rsg_male.
 }
 \examples{
@@ -52,6 +50,6 @@ methods = list(base = list(method = "sampling_groundtruth",
                random = list(method = "sampling_random",
                              params = list()))
 
-sampling(fertilized_eggs, n_males, methods = methods, mso = mso, gametes = gametes, scaled = T)
+sampling(fertilized_eggs, n_males, methods = methods, mso = mso, gametes = gametes)
 }
 }

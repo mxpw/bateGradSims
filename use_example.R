@@ -4,23 +4,28 @@ n_females = 100
 n_males = 90
 n_gamete_fem = 200
 ratio_gamete = 0.8
+ratio_gamete = 10
 cv_normal_male = 0.1
+
+set.seed(42)
 
 # Get gametes
 gametes = gametes_drawing(n_females = n_females, n_males = n_males,
                           mean_gamete_female = n_gamete_fem, ratio_gamete = ratio_gamete,
                           male_distrib_params = cv_normal_male)
 
-# Get males comp. values (either from any distribution)
-males_comp_values = get_male_comp_values(n_males = n_males, dist_params = list(x=1:100, replace = TRUE), plot = T)
+# Get males comp. values (either using uniform, normal, beta or any distributions)
+males_comp_values = get_male_comp_values(n_males = n_males, distrib = sample, dist_params = list(x=1:100, replace = TRUE), plot = T)
+males_comp_values = get_male_comp_values(n_males = n_males, distrib = rnorm, dist_params = list(mean = 100, sd = 10), plot = T)
+males_comp_values = get_male_comp_values(n_males = n_males, distrib = rbeta, dist_params = list(shape1 = 5, shape2 = 5), plot = T)
+
 
 # from a conditional distrib. e.g., depending on gametes counts
 males_comp_values = get_male_comp_values_from_feature(mean_comp_value = 10,
-                                                      sd_comp_value = 10,
-                                                      rho = -0.2,
+                                                      sd_comp_value = 20,
+                                                      rho = -0.5,
                                                       feature = gametes$gam_male,
-                                                      plot=T)
-plot(gametes$gam_male, males_comp_values)
+                                                      plots=T)
 
 # Get pollen repartition
 pollen_repartition = pollen_export(n_females = n_females,
@@ -41,26 +46,49 @@ fertilized_eggs = eggs_abortion(fertilized_eggs, aborded_fraction = 0)
 pop_average_rp(correlated_paternity = correlated_paternity(fertilized_eggs),
                                  n_males = n_males)
 
-# Get samples 'by hand' - not the better strategy in order to compare method afterward
-sampling_groundtruth(fertilized_eggs, n_males)
-sampling_fixed(fertilized_eggs, n_males, by_female_samples = 50, undercount_female = 'keep')
-sampling_prorata(fertilized_eggs, n_males, by_female_prop = 0.5, min_threshold = 30,
-                 undercount_female = 'remove_and_upsample', upsample_strategy = 's2', upsampling_plot = T)
-sampling_random(fertilized_eggs, n_males)
+
+# Using any sampling method ...
+# Revoir à partir d'ici
+sampled_fertilized_eggs = sampling_groundtruth(fertilized_eggs)
+get_sexual_selection_components(fertilized_eggs = fertilized_eggs,
+                                sampled_fertilized_eggs = sampled_fertilized_eggs,
+                                n_males = n_males)
+
+sampled_fertilized_eggs = sampling_fixed(fertilized_eggs, n_males, by_female_samples = 50, undercount_female = 'keep')
+get_sexual_selection_components(fertilized_eggs = fertilized_eggs,
+                                sampled_fertilized_eggs = sampled_fertilized_eggs,
+                                n_males = n_males)
+
+sampled_fertilized_eggs = sampling_prorata(fertilized_eggs, n_males, by_female_prop = 0.5, min_threshold = 30,
+                                           undercount_female = 'remove_and_upsample', upsample_strategy = 's1', upsampling_plot = T)
+get_sexual_selection_components(fertilized_eggs = fertilized_eggs,
+                                sampled_fertilized_eggs = sampled_fertilized_eggs,
+                                n_males = n_males)
+
+sampled_fertilized_eggs = sampling_random(fertilized_eggs, n_males)
+get_sexual_selection_components(fertilized_eggs = fertilized_eggs,
+                                sampled_fertilized_eggs = sampled_fertilized_eggs,
+                                n_males = n_males)
 
 
-# Get samples with wrapper (groundtruth should always be estimated - that's the baseline, might be added directly within the sampling() function)
-# Better to specify all parameters (even default ones) if one wants to keep tracks of all of them
-methods = list(base = list(method = "sampling_groundtruth", params = list()),
-               fixed = list(method = "sampling_fixed", params = list(total_samples = 4000, undercount_female = 'remove')),
+# To avoid repetition and extra-gathering work, one can use the sampling() function to use multiple sampling methods (given as list as follow)
+# Better to specify all parameters (even default ones) if one wants to keep tracks of all of them in outputs
+methods = list(fixed = list(method = "sampling_fixed", params = list(total_samples = 4000, undercount_female = 'remove')),
                prorata = list(method = "sampling_prorata", params = list(total_samples = 4000, min_threshold = 5,
                                                                          undercount_female = 'remove', upsample_strategy = 's1')),
                prorata = list(method = "sampling_prorata", params = list(total_samples = 4000, min_threshold = 5,
                                                                          undercount_female = 'remove', upsample_strategy = 's2')),
                random = list(method = "sampling_random", params = list(total_samples = 4000)))
 
-samples = sampling(fertilized_eggs, n_males, methods = methods, mso = mso, gametes = gametes, scaled = T, n_rep = 1)
-gradients = fit_gradients(samples)
+# The n_rep apply to all sampling methods
+samples = sampling(fertilized_eggs, n_males, methods = methods, mso = mso, gametes = gametes, n_rep = 2)
+
+
+# Descriptive stats can be obtained from samples
+descriptive_stats(samples)
+
+# Then gradients can be obtained (MS/RS can be scale before fitting, see scaled argument)
+gradients = fit_gradients(samples, scaled = TRUE)
 gradients$gradients
 
 library(tidyverse)

@@ -405,10 +405,13 @@ ms_obs = function(pollen_repartition){
 #'
 #' @param samples Tibble (or dataframe) with columns : mso, msg, rsg, n_gam (can be null), sex, sampling_method (string), parameters (list), parameters (string) - ideally coming from sampling() function.
 #' @param family  Family used for GLM ; gaussian if data were scaled, poisson otherwise (or 'quasi' alternative when overdispersed data ) (default : 'gaussian')
+#' @param scaled Should MS/RS be scale before fit (default: True)
 #'
-#' @details Fits Bateman gradients on each sampling_method / parameters_string combination.
-#' When data are scaled (in the sampling() function, should use 'gaussian' family), if not, user should specify (quasi-)poisson family instead.
-#' If n_gam (number of gametes by idv) is not NULL, two GLM are fitted ; one w/ n_gam as covariate, one w/o (controls for # of gametes or not)
+#' @details Fits Bateman gradients on each sampling_method / parameters_string combination and for each replicate.
+#' When scaling is required (default behaviour, see scaled arg, should use 'gaussian' family), if not, user should specify (quasi-)poisson family instead.
+#' If n_gam (number of gametes by idv) is not NULL, two GLM are fitted ; one w/ n_gam as covariate, one w/o (controls for # of gametes or not).
+#'
+#' Note, the n_gam value is usually not known in experiment (?) - not clear how to deal with that.
 #'
 #' @return List of two tibbles : (i) one named 'gradients' with sampling_method, parameters, inferred gradients and differences to base gradients,
 #' (ii) one names 'glms' with sampling_method, parameters, parameters_string, data, and glms results
@@ -423,26 +426,29 @@ ms_obs = function(pollen_repartition){
 #' @export
 #'
 
-fit_gradients = function(samples, family = 'gaussian'){
+fit_gradients = function(samples, family = 'gaussian', scaled = TRUE){
 
   n_gam_available = !any(is.na(samples$n_gam))
+
+  if(scaled){
+    print("MS/RS will be scaled - family should be set accordingly (gaussian)")
+    samples = ms_rs_scaling(samples)
+  }
 
   # Fit models
   glms = samples %>% nest_by(.data$sampling_method, .data$parameters, .data$parameters_string, .data$replicate)
   glms = glms %>% mutate(lm_noGamControl = list(glm(rsg ~ (msg) * sex, data = .data$data, family = family)))
-
-  print(names(glms))
 
   if(n_gam_available)
     glms = glms %>% mutate(lm_gamControl = list(glm(rsg ~ (msg + n_gam) * sex, data = .data$data, family = family)))
 
   # Get slopes
   glms = glms %>% mutate(slopes_noGamControl = list(tibble(sex = c('F', 'M'),
-                                                           slopes = c( .data$lm_noGamControl$coefficients[['msg']], .data$lm_noGamControl$coefficients[['msg:sexM']] ))))
+                                                           slopes = c( lm_noGamControl$coefficients[['msg']], lm_noGamControl$coefficients[['msg:sexM']] ))))
 
   if(n_gam_available)
     glms = glms %>% mutate(slopes_gamControl = list(tibble(sex = c('F', 'M'),
-                                                           slopes = c( .data$lm_gamControl$coefficients[['msg']], .data$lm_gamControl$coefficients[['msg:sexM']] ))))
+                                                           slopes = c( lm_gamControl$coefficients[['msg']], lm_gamControl$coefficients[['msg:sexM']] ))))
 
   # Compute deltas
   base_noGamControl = (glms %>% filter(.data$sampling_method == 'base') %>% pull(.data$slopes_noGamControl))[[1]]

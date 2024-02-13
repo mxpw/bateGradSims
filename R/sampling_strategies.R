@@ -417,13 +417,13 @@ sampling_random = function( fertilized_eggs, n_males, total_samples = 1000){
 #' @param fertilized_eggs List of size n_females containing father for each fertilized eggs (from e.g., pollen_competition() function) (no default)
 #' @param n_males Number of males (no default)
 #' @param methods List of lists containing methods to use and associated parameters (see examples)
-#' @param scaled Should the MS/RS should be scaled ? (default TRUE)
 #' @param mso MS obtained directly from observations (i.e. pollen repartition over females before pollen competition) (from ms_obs() function, not required)
 #' @param gametes Number of gametes for each females/males (from gametes_drawing() function, not required)
 #' @param n_rep Number of time each sampling method shoud be replicated (default 1)
 #'
-#' @details Run all required sampling methods with associated parameters n_rep time each. Results can be scaled by sex, methods & methods parameters.
-#' User defined function can also be used here ; two constraints : (i) first two arguments must be 'fertilized_eggs' and 'n_males', others can be
+#' @details Run all required sampling methods with associated parameters n_rep time each.
+#'
+#' User defined function can also be used here ; two constraints : (i) first two arguments must be 'fertilized_eggs' and 'n_males' (can be made optional, see the internal sampling_groundtruth() for an example), others can be
 #' anything defined by the user, (ii) the function must return list with four elements : msg_female, rsg_female, msg_male, rsg_male.
 #'
 #' @return Dataframe with MS (obs), MS (gen), RS (gen), gamete counts, sex, sampling_method, parameters used for the sampling method, and replicate IDs
@@ -445,12 +445,12 @@ sampling_random = function( fertilized_eggs, n_males, total_samples = 1000){
 #'                random = list(method = "sampling_random",
 #'                              params = list()))
 #'
-#' sampling(fertilized_eggs, n_males, methods = methods, mso = mso, gametes = gametes, scaled = T)
+#' sampling(fertilized_eggs, n_males, methods = methods, mso = mso, gametes = gametes)
 #' }
 #' @export
 #'
 #'
-sampling = function(fertilized_eggs, n_males, methods = NULL, scaled = TRUE, mso = NULL, gametes = NULL, n_rep = 1){
+sampling = function(fertilized_eggs, n_males, methods = NULL, mso = NULL, gametes = NULL, n_rep = 1){
 
   n_females = length(fertilized_eggs)
 
@@ -500,14 +500,7 @@ sampling = function(fertilized_eggs, n_males, methods = NULL, scaled = TRUE, mso
     }
   }
 
-
-  print("Scaling is weird !! Should it not be true scaling instead ?! here, when zero => stay zero")
-  if(scaled)
-    return(output %>% group_by(.data$sex, .data$sampling_method, .data$parameters_string, .data$replicate) %>%
-             mutate(across(.data$mso:.data$rsg, ~ .x / mean(.x, na.rm = T))) %>%
-             ungroup())
-
-  return(output)
+  output
 }
 
 
@@ -532,6 +525,26 @@ descriptive_stats = function(ms_rs_from_sampling){
                                            sd = ~ sd(.x, na.rm = T))))
 }
 
+#' Standardized MS/RS
+#'
+#' Standardized MS/RS by sex, sampling method, sampling parameters and replicate
+#'
+#' @param samples Dataframe similar to the one produce by sampling()
+#'
+#' @details Standardize MS/RS - using x / mean(x) (see ???)
+#'
+#' @return Standardize MS/RS
+#'
+#' @importFrom dplyr group_by ungroup summarise across
+#' @importFrom rlang .data
+#'
+#'
+
+ms_rs_scaling = function(samples){
+  return(samples %>% group_by(.data$sex, .data$sampling_method, .data$parameters_string, .data$replicate) %>%
+           mutate(across(.data$mso:.data$rsg, ~ .x / mean(.x, na.rm = T))) %>%
+           ungroup())
+}
 
 
 #' Correlated paternity

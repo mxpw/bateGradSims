@@ -4,12 +4,14 @@
 \alias{fit_gradients}
 \title{Fit Bateman gradients}
 \usage{
-fit_gradients(samples, family = "gaussian")
+fit_gradients(samples, family = "gaussian", scaled = TRUE)
 }
 \arguments{
 \item{samples}{Tibble (or dataframe) with columns : mso, msg, rsg, n_gam (can be null), sex, sampling_method (string), parameters (list), parameters (string) - ideally coming from sampling() function.}
 
 \item{family}{Family used for GLM ; gaussian if data were scaled, poisson otherwise (or 'quasi' alternative when overdispersed data ) (default : 'gaussian')}
+
+\item{scaled}{Should MS/RS be scale before fit (default: True)}
 }
 \value{
 List of two tibbles : (i) one named 'gradients' with sampling_method, parameters, inferred gradients and differences to base gradients,
@@ -19,7 +21,9 @@ List of two tibbles : (i) one named 'gradients' with sampling_method, parameters
 Fits Bateman gradients on samples
 }
 \details{
-Fits Bateman gradients on each sampling_method / parameters_string combination.
-When data are scaled (in the sampling() function, should use 'gaussian' family), if not, user should specify (quasi-)poisson family instead.
-If n_gam (number of gametes by idv) is not NULL, two GLM are fitted ; one w/ n_gam as covariate, one w/o (controls for # of gametes or not)
+Fits Bateman gradients on each sampling_method / parameters_string combination and for each replicate.
+When scaling is required (default behaviour, see scaled arg, should use 'gaussian' family), if not, user should specify (quasi-)poisson family instead.
+If n_gam (number of gametes by idv) is not NULL, two GLM are fitted ; one w/ n_gam as covariate, one w/o (controls for # of gametes or not).
+
+Note, the n_gam value is usually not known in experiment (?) - not clear how to deal with that.
 }
