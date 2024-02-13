@@ -531,7 +531,7 @@ descriptive_stats = function(ms_rs_from_sampling){
 #'
 #' @param samples Dataframe similar to the one produce by sampling()
 #'
-#' @details Standardize MS/RS - using x / mean(x) (see ???)
+#' @details Standardize MS/RS - using x / mean(x) (see Lande ??)
 #'
 #' @return Standardize MS/RS
 #'

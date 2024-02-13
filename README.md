@@ -35,7 +35,7 @@ library(bateGradSims)
 	- [ ] Attention - en l'état, ce ne sont pas les $\beta$ estimés qui sont représentés
 - [ ] Ajout statistiques descriptives sur MS/RS (moyennes et variances) - sur les échantillons ainsi que sur les RS/MS vrais
 - [x] Bootstrap des tirages
-	- [ ] Revoir la fonction sampling pour intégrer par défaut le groundtruth() (et ne pas le répliquer...)
+	- [x] Revoir la fonction sampling pour intégrer par défaut le groundtruth() (et ne pas le répliquer...)
 - [x] Paternity share 
 - [ ] Extraire la partie qui créer la matrice des alpha de dirichlet de la fonction pollen export - sera plus flexible (permet de définir différentes méthodes pour créer la dite matrice voir d'en spécifier une à la main)
   - [ ] TODO - définir method
@@ -54,8 +54,8 @@ library(bateGradSims)
 - [ ] Quelle valeur de correlation de paternité si une seule graine ? (par defaut, selon la formule => NaN car division par zéro)
 - [ ] Question des arrondis - notamment pro-rata ; 10% sur 4 ovules -> 0.4 => 0 ou 1 ?
 - [ ] Check valeurs par défaut pour ms/rs (NA vs. 0)
-- [ ] Sampling chelou (x/mean(x)) - voir fonction sampling() + commentaire à la fin
-- [ ] Check des group_by avec replicats 
-  - [ ] pour le sampling
-  - [ ] pour le fit gradients
+- [x] Sampling chelou (x/mean(x)) - voir fonction sampling() + commentaire à la fin
+- [x] Check des group_by avec replicats 
+  - [x] pour le sampling
+  - [x] pour le fit gradients
 - [ ] Revoir toute la doc >_<

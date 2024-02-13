@@ -33,7 +33,7 @@ pollen_repartition = pollen_export(n_females = n_females,
                                     pollen_repartition = c(0.01),
                                     plot = T)
 
-# Mating Success (observed - exact) can then be computed from the pollen_repartition
+# Mating Success (observed - exact) can be computed from the pollen_repartition
 mso = ms_obs(pollen_repartition)
 
 # Pollen competition, i.e., who fertilizes who
