@@ -1,13 +1,13 @@
 library(bateGradSims)
 
-n_females = 100
-n_males = 90
-n_gamete_fem = 200
-ratio_gamete = 0.8
-ratio_gamete = 10
+n_females = 10
+n_males = 10
+n_gamete_fem = 250
+ratio_gamete = 400
+# ratio_gamete = 10
 cv_normal_male = 0.1
 
-set.seed(42)
+# set.seed(42)
 
 # Get gametes
 gametes = gametes_drawing(n_females = n_females, n_males = n_males,
@@ -16,21 +16,22 @@ gametes = gametes_drawing(n_females = n_females, n_males = n_males,
 
 # Get males comp. values (either using uniform, normal, beta or any distributions)
 males_comp_values = get_male_comp_values(n_males = n_males, distrib = sample, dist_params = list(x=1:100, replace = TRUE), plot = T)
-males_comp_values = get_male_comp_values(n_males = n_males, distrib = rnorm, dist_params = list(mean = 100, sd = 10), plot = T)
-males_comp_values = get_male_comp_values(n_males = n_males, distrib = rbeta, dist_params = list(shape1 = 5, shape2 = 5), plot = T)
+males_comp_values = get_male_comp_values(n_males = n_males, distrib = sample, dist_params = list(x=c(49:50), replace = TRUE), plot = T)
+# males_comp_values = get_male_comp_values(n_males = n_males, distrib = rnorm, dist_params = list(mean = 100, sd = 10), plot = T)
+# males_comp_values = get_male_comp_values(n_males = n_males, distrib = rbeta, dist_params = list(shape1 = 5, shape2 = 5), plot = T)
 
 
 # from a conditional distrib. e.g., depending on gametes counts
-males_comp_values = get_male_comp_values_from_feature(mean_comp_value = 10,
-                                                      sd_comp_value = 20,
-                                                      rho = -0.5,
-                                                      feature = gametes$gam_male,
-                                                      plots=T)
+# males_comp_values = get_male_comp_values_from_feature(mean_comp_value = 10,
+#                                                       sd_comp_value = 20,
+#                                                       rho = -0.5,
+#                                                       feature = gametes$gam_male,
+#                                                       plots=T)
 
 # Get pollen repartition
 pollen_repartition = pollen_export(n_females = n_females,
                                     gametes_by_male = gametes$gam_male,
-                                    pollen_repartition = c(0.01),
+                                    pollen_repartition = c(1),
                                     plot = T)
 
 # Mating Success (observed - exact) can be computed from the pollen_repartition
@@ -73,12 +74,13 @@ get_sexual_selection_components(fertilized_eggs = fertilized_eggs,
 
 # To avoid repetition and extra-gathering work, one can use the sampling() function to use multiple sampling methods (given as list as follow)
 # Better to specify all parameters (even default ones) if one wants to keep tracks of all of them in outputs
-methods = list(fixed = list(method = "sampling_fixed", params = list(total_samples = 4000, undercount_female = 'remove')),
-               prorata = list(method = "sampling_prorata", params = list(total_samples = 4000, min_threshold = 5,
+n_eggs_sampled = 2000
+methods = list(fixed = list(method = "sampling_fixed", params = list(total_samples = n_eggs_sampled, undercount_female = 'remove')),
+               prorata = list(method = "sampling_prorata", params = list(total_samples = n_eggs_sampled, min_threshold = 10,
                                                                          undercount_female = 'remove', upsample_strategy = 's1')),
-               prorata = list(method = "sampling_prorata", params = list(total_samples = 4000, min_threshold = 5,
+               prorata = list(method = "sampling_prorata", params = list(total_samples = n_eggs_sampled, min_threshold = 10,
                                                                          undercount_female = 'remove', upsample_strategy = 's2')),
-               random = list(method = "sampling_random", params = list(total_samples = 4000)))
+               random = list(method = "sampling_random", params = list(total_samples = n_eggs_sampled)))
 
 # The n_rep apply to all sampling methods
 samples = sampling(fertilized_eggs, n_males, methods = methods, mso = mso, gametes = gametes, n_rep = 2)
@@ -90,6 +92,8 @@ descriptive_stats(samples)
 # Then gradients can be obtained (MS/RS can be scale before fitting, see scaled argument)
 gradients = fit_gradients(samples, scaled = TRUE)
 gradients$gradients
+
+gradients$gradients %>% group_by(sampling_method, parameters_string) %>% summarise(across(abs_female_noGamControl:delta_male_gamControl, ~ mean(.x)))
 
 library(tidyverse)
 gradients$gradients %>%
