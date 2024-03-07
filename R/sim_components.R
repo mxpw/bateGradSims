@@ -351,7 +351,7 @@ pollen_competition = function(pollen_repartition, males_comp_values, gametes_by_
       print(paste0("=> Overall, ", eggs_unfertilized ," (", egg_percent ,"%) eggs haven't been fertilized"))
 
     }else{
-      print("No pollen limitation (all eggs are fertilized")
+      print("No pollen limitation (all eggs are fertilized)")
     }
   }
 

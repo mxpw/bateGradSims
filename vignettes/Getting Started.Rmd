@@ -50,8 +50,8 @@ Then, parameters for gametes production. For now, gametes production follows eit
 Let's define minimal parameters 
 
 ```{r}
-n_gamete_fem = 200
-ratio_gamete = 10
+n_gamete_fem = 20
+ratio_gamete = 3
 ```
 
 
@@ -163,6 +163,14 @@ pollen_repartition = pollen_export(n_females = n_females,
 ```
 
 
+```{r, echo = FALSE}
+pollen_repartition = pollen_export(n_females = n_females,
+                                    gametes_by_male = gametes$gam_male,
+                                   pollen_repartition = 0.01,
+                                    plot = T)
+```
+
+
 En l'état, c'est tout ce que l'on peut faire avec cette fonction (on peut très bien gérer à la fois les hétérogénéités entre mâles et des différences d'attractivité entre femelle). Il faut cependant faire un peu attention :
 
 __Points d'attention__
@@ -223,11 +231,11 @@ fertilized_eggs = pollen_competition(pollen_repartition, males_comp_values, game
 
 ```
 
-Some info on pollen limitation are displayed, and the function return a list of size n_female: each entry contain males' identity for each eggs.
+Some infos on pollen limitation are displayed (should more info be returned ?), and the function return a list of size n_female: each entry contain males' identity for each eggs.
 
 #### Eggs abortion
 
-If needed.
+If needed, one can simulate eggs abortion - using either a constant value for all females or a vector of size n_female (shorter vectors will rise error - no vector recycling, it can be changed but I don't think it's a good practice). 
 
 ```{r}
 
@@ -237,7 +245,7 @@ fertilized_eggs = eggs_abortion(fertilized_eggs, aborded_fraction = 0)
 
 #### Correlated paternity
 
-Correlated paternity can be computed from fertilized_eggs list
+Correlated paternity can be computed from fertilized_eggs list - the __correlated_paternity()__ function returns patternity correlations by female, while __pop_average_rp()__ returns the pop. level average patternity correlation (raw or corrected, following Dorken & Perry, 2017).
 
 ```{r}
 
@@ -248,7 +256,7 @@ pop_average_rp(correlated_paternity = correlated_paternity(fertilized_eggs),
 
 ### Sampling
 
-Various sampling can be used - check detailled documentation for each. 
+Various sampling can be used - check detailed documentation for each. 
 
 Some examples : 
 
@@ -258,22 +266,28 @@ get_sexual_selection_components(fertilized_eggs = fertilized_eggs,
                                 sampled_fertilized_eggs = sampled_fertilized_eggs,
                                 n_males = n_males)
 
-sampled_fertilized_eggs = sampling_fixed(fertilized_eggs, n_males, by_female_samples = 50, undercount_female = 'keep')
+sampled_fertilized_eggs = sampling_fixed(fertilized_eggs, n_males, by_female_samples = 15, undercount_female = 'keep')
 get_sexual_selection_components(fertilized_eggs = fertilized_eggs,
                                 sampled_fertilized_eggs = sampled_fertilized_eggs,
                                 n_males = n_males)
 
-sampled_fertilized_eggs = sampling_prorata(fertilized_eggs, n_males, by_female_prop = 0.5, min_threshold = 30,
+sampled_fertilized_eggs = sampling_prorata(fertilized_eggs, n_males, by_female_prop = 0.4, min_threshold = 5,
                                            undercount_female = 'remove_and_upsample', upsample_strategy = 's1', upsampling_plot = T)
 get_sexual_selection_components(fertilized_eggs = fertilized_eggs,
                                 sampled_fertilized_eggs = sampled_fertilized_eggs,
                                 n_males = n_males)
 
-sampled_fertilized_eggs = sampling_random(fertilized_eggs, n_males)
+sampled_fertilized_eggs = sampling_random(fertilized_eggs, n_males, total_samples = 500)
 get_sexual_selection_components(fertilized_eggs = fertilized_eggs,
                                 sampled_fertilized_eggs = sampled_fertilized_eggs,
                                 n_males = n_males)
 ```
+
+With prorata strategy, plot showing upsampling effects can be displayed (using __upsampling_plot__ parameter) - it shows, for each the female, the initial number of eggs to sample (black dots), the minimal threshold (black dashed horizontal line), and the number of eggs to sample after upsampling (red dots). Crosses on the right indicate females that will be remove (because __min_threshold__ can't be reach, even with upsampling). 
+
+Once sampled eggs are available (__sampled_fertilized_eggs__ here), sexual selection base variable can be computed using __get_sexual_selection_components()__ function. It will return MS/RS for females and males. Note that paternity share can be (and is, by default) considered. Both __fertilized_eggs__ (before sampling) and __sampled_fertilized_eggs__ (after sampling) should be provided since females RS depends on eggs before sampling (and this should be know to compute male RS while considering paternity share). 
+
+__Note__ : some parameters combinations will rise errors (typically when requested total number of eggs can't be reached) - as it is, it will stop the job. I'm not sure it's the best behaviour (from a "security" viewpoint, it seems better instead of doing weird and not really controlled stuffs, but, from an automatisation viewpoint, it might break down pipeline - which can be boring when running batch of jobs...). 
 
 While each method can be used one by one, a convenient wrapper can be used. It allows to : (i) specify multiple sampling strategy (that will be evaluate in turn), (ii) replicate each strategy a given number of time. Note that groundtruth is automatically computed (without need for further specification).
 

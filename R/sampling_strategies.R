@@ -581,7 +581,7 @@ rp_calculation = function(female_seed_set){
 #' @param correlated_paternity Vector of size n_females containing by female correlated paternity (no default)
 #' @param n_males Number of male in the population
 #'
-#' @details Compute pop. average correlated paternity (following Dorken & Perry, 2017) and corrected version.
+#' @details Compute pop. average correlated paternity (following Dorken & Perry, 2017) and corrected version (pop average * (n_male - 1)).
 #'
 #' @return List of two elements, the uncorrected pop. average correlated paternity and the corrected version.
 #'
