@@ -8,6 +8,7 @@ output: html_document
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 library(bateGradSims)
+library(tidyverse)
 ```
 
 ## The package
@@ -266,7 +267,7 @@ get_sexual_selection_components(fertilized_eggs = fertilized_eggs,
                                 sampled_fertilized_eggs = sampled_fertilized_eggs,
                                 n_males = n_males)
 
-sampled_fertilized_eggs = sampling_fixed(fertilized_eggs, n_males, by_female_samples = 15, undercount_female = 'keep')
+sampled_fertilized_eggs = sampling_fixed(fertilized_eggs, n_males, by_female_samples = 10, undercount_female = 'keep')
 get_sexual_selection_components(fertilized_eggs = fertilized_eggs,
                                 sampled_fertilized_eggs = sampled_fertilized_eggs,
                                 n_males = n_males)
@@ -285,7 +286,7 @@ get_sexual_selection_components(fertilized_eggs = fertilized_eggs,
 
 With prorata strategy, plot showing upsampling effects can be displayed (using __upsampling_plot__ parameter) - it shows, for each the female, the initial number of eggs to sample (black dots), the minimal threshold (black dashed horizontal line), and the number of eggs to sample after upsampling (red dots). Crosses on the right indicate females that will be remove (because __min_threshold__ can't be reach, even with upsampling). 
 
-Once sampled eggs are available (__sampled_fertilized_eggs__ here), sexual selection base variable can be computed using __get_sexual_selection_components()__ function. It will return MS/RS for females and males. Note that paternity share can be (and is, by default) considered. Both __fertilized_eggs__ (before sampling) and __sampled_fertilized_eggs__ (after sampling) should be provided since females RS depends on eggs before sampling (and this should be know to compute male RS while considering paternity share). 
+Once sampled eggs are available (__sampled_fertilized_eggs__ here), sexual selection base variables can be computed using __get_sexual_selection_components()__ function. It will return MS/RS for females and males. Note that paternity share can be (and is, by default) considered. Both __fertilized_eggs__ (before sampling) and __sampled_fertilized_eggs__ (after sampling) should be provided since females RS depends on eggs counts before sampling (and this need to be know to compute male RS while considering paternity share). 
 
 __Note__ : some parameters combinations will rise errors (typically when requested total number of eggs can't be reached) - as it is, it will stop the job. I'm not sure it's the best behaviour (from a "security" viewpoint, it seems better instead of doing weird and not really controlled stuffs, but, from an automatisation viewpoint, it might break down pipeline - which can be boring when running batch of jobs...). 
 
@@ -294,7 +295,7 @@ While each method can be used one by one, a convenient wrapper can be used. It a
 ```{r}
 # To avoid repetition and extra-gathering work, one can use the sampling() function to use multiple sampling methods (given as list as follow)
 # Better to specify all parameters (even default ones) if one wants to keep tracks of all of them in outputs
-n_eggs_sampled = 2000
+n_eggs_sampled = 500
 methods = list(fixed = list(method = "sampling_fixed", params = list(total_samples = n_eggs_sampled, undercount_female = 'remove')),
                prorata = list(method = "sampling_prorata", params = list(total_samples = n_eggs_sampled, min_threshold = 10,
                                                                          undercount_female = 'remove', upsample_strategy = 's1')),
@@ -310,12 +311,32 @@ Some desciptive statistics can then be obtained :
 
 ```{r}
 # Descriptive stats can be obtained from samples
-descriptive_stats(samples)
+descp_stats = descriptive_stats(samples)
+descp_stats
+
 ```
+
+Returned statustucs are; observed mating success (mean and sd, mso_mean and mso_sd resp.) - computed from __mso()__ function (i.e. computed from where pollen land), genetic mating success (mean and sd, msg_mean and msg_sd) computed after sampling (except when sampling_method is <base>, in which case, values displayed correspond to "true" genetic mating success - number of mate after pollen competition but before sampling) and lastly, reproductive success (rsg_mean and rsg_sd). 
+
+Descriptive statistics table can be easily converted to long format (e.g. for plotting purpose), using the following:
+
+
+```{r}
+descp_stats %>%
+    pivot_longer( cols = ends_with(c('mean', 'sd')),
+                  names_to = c("variable", "stat"),
+                  names_pattern = "(.*)_(.*)" )
+```
+
 
 ### Gradients
 
-Lastly, Bateman gradients ; return results contains two elements : (i) one named 'gradients' with sampling_method, parameters, inferred gradients and differences to base gradients, (ii) one names 'glms' with sampling_method, parameters, parameters_string, data, and glms results
+Lastly, Bateman gradients can be estimated in turn from output of the sampling method; MS and RS can be scaled (using weird but apparently correct ; $\tilde x = \frac{x}{\bar x}$, with the __scaled__ parameter, which is True by default), and GLM family can also be specified (Gaussian by default). Any family accepted by lme4::glm() can be specify (e.g. poisson, quasipoisson). (might implement more options in future, e.g. negative binomial ?). If __n_gam__ is available in the dataframe (by default __sampling()__ function return those, although it might not be known for males in real situations), additional partial Bateman gradients are also computed (i.e. rs ~ (ms + n_gam) * sex). 
+
+Returned results contain two elements : (i) one named 'gradients' with sampling_method, parameters, inferred gradients and differences to base gradients, (ii) one names 'glms' with sampling_method, parameters, parameters_string, data, glms results, and main coefficients. 
+
+__Note__ ; as it is, no R2 is returned since we implement GLMs (check whether it make sense to add id - for Gaussian model, no question, but what about Poisson ? see e.g. [Stack](https://stats.stackexchange.com/questions/551915/interpreting-nonlinear-regression-r2), we could use Pseudo-R2, is it what we want ?)
+
 
 ```{r}
 
@@ -325,6 +346,24 @@ gradients
 
 ```
 
-### Next
+__Temporary plots__ ; have to work a bit on those (not really usefull for simulation purpose)
 
-A bit more to come soon. 
+
+```{r}
+
+gradients$gradients %>%
+  pivot_longer( cols = starts_with(c('abs', 'delta')),
+                names_to = c("type", "sex", "gamControl"),
+                names_pattern = "(.*)_(.*)_(.*)" )
+
+plot_list = list()
+for(i in 1:nrow(gradients$glms)){
+  print(paste0( gradients$glms$sampling_method[[i]], '::' , gradients$glms$parameters_string[[i]] ))
+  plot_list[[i]] = ggplot( (gradients$glms %>% pull(data))[[i]], aes(x = msg, y = rsg, color = sex))+
+    geom_point()+
+    geom_smooth(method='lm')+
+    theme_bw()
+}
+cowplot::plot_grid(plotlist = plot_list)
+```
+

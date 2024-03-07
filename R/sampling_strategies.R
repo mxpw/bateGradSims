@@ -60,6 +60,7 @@ get_sexual_selection_components = function( fertilized_eggs, sampled_fertilized_
 #' @export
 #'
 sampling_groundtruth=function(fertilized_eggs, ...){
+  print("=== Sampling : Groundtruth ===")
   fertilized_eggs
 }
 
@@ -93,6 +94,7 @@ sampling_groundtruth=function(fertilized_eggs, ...){
 sampling_fixed = function( fertilized_eggs, n_males, total_samples = 1000,
                            by_female_samples = NULL, undercount_female = 'remove'){
 
+  print("=== Sampling : Fixed ===")
   n_females = length(fertilized_eggs)
 
   if(is.null(by_female_samples)){
@@ -230,6 +232,8 @@ sampling_fixed = function( fertilized_eggs, n_males, total_samples = 1000,
 sampling_prorata = function(fertilized_eggs, n_males, total_samples = 1000, by_female_prop = NULL,
                            min_threshold = 0, undercount_female = 'remove', upsample_strategy = 's1',
                            upsampling_plot = FALSE){
+
+  print("=== Sampling : Prorata ===")
 
   n_females = length(fertilized_eggs)
 
@@ -387,6 +391,8 @@ sampling_prorata = function(fertilized_eggs, n_males, total_samples = 1000, by_f
 #'
 
 sampling_random = function( fertilized_eggs, n_males, total_samples = 1000){
+
+  print("=== Sampling : Random ===")
 
   n_females = length(fertilized_eggs)
   weights_ = sapply(fertilized_eggs, length)
