@@ -16,5 +16,5 @@ Standardize MS/RS
 Standardized MS/RS by sex, sampling method, sampling parameters and replicate
 }
 \details{
-Standardize MS/RS - using x / mean(x) (see ???)
+Standardize MS/RS - using x / mean(x) (see Lande ??)
 }

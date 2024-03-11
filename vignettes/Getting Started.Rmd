@@ -19,15 +19,15 @@ Can be find [here](https://github.com/mxpw/bateGradSims) along with some explana
 
 blabla what's the best sampling procedure depending on species/population ?
 
-### Aim 
+### Aim
 
 [TO COMPLETE]
 
-The package allows to 
+The package allows to
 
-+ simulate reproduction among individuals (considered as dioecious but could be extented to monoecious species with few changes), 
-+ simulate sampling procedures (fix, prorata, random, or any user-defined sampling method)
-+ get (partial) Bateman gradients and compare sampling procedures "easily"
+-   simulate reproduction among individuals (considered as dioecious but could be extented to monoecious species with few changes),
+-   simulate sampling procedures (fix, prorata, random, or any user-defined sampling method)
+-   get (partial) Bateman gradients and compare sampling procedures "easily"
 
 ## Core functions
 
@@ -39,22 +39,22 @@ Simulating reproduction among individuals follows the following steps
 
 #### Set populations parameters
 
-We first need to define populations size. Let's assume a population with 50 females and 45 males. 
+We first need to define populations size. Let's assume a population with 50 females and 45 males.
 
 ```{r}
+
 n_females = 50
 n_males = 45
 ```
 
 Then, parameters for gametes production. For now, gametes production follows either (rounded) Gaussian or Poisson distribution. Minimal arguments are the expected number of gametes by female and the overall gametes ratio male/female (i.e. with a ratio of 10, males have on average ten more gametes than females), the default behavior is to use Poisson distribution for female and Gaussian distribution for male (with a default variation coefficient of 10%). Others arguments can be see in the doc.
 
-Let's define minimal parameters 
+Let's define minimal parameters
 
 ```{r}
 n_gamete_fem = 20
 ratio_gamete = 3
 ```
-
 
 #### Get by individual gametes
 
@@ -66,9 +66,9 @@ gametes = gametes_drawing(n_females = n_females, n_males = n_males,
 
 ```
 
-The function return a list with two elements : (i) gametes by female, (ii) gametes by male. 
+The function return a list with two elements : (i) gametes by female, (ii) gametes by male.
 
-__Note__ : here, and everywhere after, the sequence order is very important since individuals are only known by their index in all vectors and lists (not a good coding choice - not sure how to implement better code in R).
+**Note** : here, and everywhere after, the sequence order is very important since individuals are only known by their index in all vectors and lists (not a good coding choice - not sure how to implement better code in R).
 
 ```{r}
 gametes
@@ -76,15 +76,15 @@ gametes
 
 #### Pollen export
 
-This part is central to constrain how males export gametes on females. See the details in the vignette(XXX) (en cours...). 
+This part is central to constrain how males export gametes on females. See the details in the vignette(XXX) (en cours...).
 
-For now, one function can be used to get destination of pollens. 
+For now, one function can be used to get destination of pollens.
 
 bon je fais en bref ici, car je vais probablement changer le code prochainement. Mais en l'état, le comportement par defaut.
 
-Un unique parametre, le __pollen_repartition__ : export très hétérogène lorsque la valeur est petite, export très homogène lorsque la valeur est grande. L'hétérogénéité de répartition pour les femelles entre males est identique. 
+Un unique parametre, le **pollen_repartition** : export très hétérogène lorsque la valeur est petite, export très homogène lorsque la valeur est grande. L'hétérogénéité de répartition pour les femelles entre males est identique.
 
-Les graphiques de gauche, donnent la répartition des grains de pollen sur les femelles (couleurs) pour 15 males tirés au hasard (les lignes). Les graphiques de droite, la distribution du nombre de femelles atteintes par male. 
+Les graphiques de gauche, donnent la répartition des grains de pollen sur les femelles (couleurs) pour 15 males tirés au hasard (les lignes). Les graphiques de droite, la distribution du nombre de femelles atteintes par male.
 
 ```{r}
 pollen_repartition = pollen_export(n_females = n_females,
@@ -93,7 +93,6 @@ pollen_repartition = pollen_export(n_females = n_females,
                                     plot = T)
 ```
 
-
 ```{r}
 pollen_repartition = pollen_export(n_females = n_females,
                                     gametes_by_male = gametes$gam_male,
@@ -101,9 +100,9 @@ pollen_repartition = pollen_export(n_females = n_females,
                                     plot = T)
 ```
 
-Avant d'aller plus loin sur ce paramètre (gérer de l'hétérogénéité entre males pour l'hétérogénéité d'export), on peut considérer le paramètre __baseline_alpha__.
+Avant d'aller plus loin sur ce paramètre (gérer de l'hétérogénéité entre males pour l'hétérogénéité d'export), on peut considérer le paramètre **baseline_alpha**.
 
-Ce dernier, de taille __n_females__, représente la "capacité" de chaque femelle à "attirer" le pollen...
+Ce dernier, de taille **n_females**, représente la "capacité" de chaque femelle à "attirer" le pollen...
 
 Par exemple, on peut définir une femelle comme étant "20x plus attractive que les autres, et ce tout en modulant les niveaux d'hétérogénéité.
 
@@ -120,8 +119,6 @@ pollen_repartition = pollen_export(n_females = n_females,
                                     plot = T)
 
 ```
-
-
 
 ```{r}
 
@@ -152,7 +149,7 @@ pollen_repartition = pollen_export(n_females = n_females,
 
 ```
 
-__Note__ Les valeurs données ainsi sont de nature differente de l'unique valeur donnée à pollen_repartition (cf. partie précédemente), les valeurs pour les males sont en fait des log10 des valeurs de pollen repartition (pour une valeur de pollen repartition de 0.01 pour un male, il faut fournir la valeur -2, pour 100 : 2). Cette petite transformation permet de tirer ces valeurs dans une distribution Gaussienne comme suit : 
+**Note** Les valeurs données ainsi sont de nature differente de l'unique valeur donnée à pollen_repartition (cf. partie précédemente), les valeurs pour les males sont en fait des log10 des valeurs de pollen repartition (pour une valeur de pollen repartition de 0.01 pour un male, il faut fournir la valeur -2, pour 100 : 2). Cette petite transformation permet de tirer ces valeurs dans une distribution Gaussienne comme suit :
 
 ```{r}
 
@@ -163,7 +160,6 @@ pollen_repartition = pollen_export(n_females = n_females,
 
 ```
 
-
 ```{r, echo = FALSE}
 pollen_repartition = pollen_export(n_females = n_females,
                                     gametes_by_male = gametes$gam_male,
@@ -171,26 +167,24 @@ pollen_repartition = pollen_export(n_females = n_females,
                                     plot = T)
 ```
 
-
 En l'état, c'est tout ce que l'on peut faire avec cette fonction (on peut très bien gérer à la fois les hétérogénéités entre mâles et des différences d'attractivité entre femelle). Il faut cependant faire un peu attention :
 
-__Points d'attention__
+**Points d'attention**
 
-- Dépendance à $\alpha_0$ : les niveaux d'hétérogénité pour l'export sont en fait controler par un paramètre $\alpha_0 = \sum_{i=0}^{n_{females}} \alpha_i * pollen\_repartition$, ils sont donc dépendant du nombre de femelles, du vecteur alpha et du paramètre de pollen repartition. En l'état, c'est probablement dangereux de faire varier deux des trois paramètres à la fois. 
-- Dans le même ordre d'idée, la notion de X fois plus attractives est trompeuse (il me semble) - pour les mêmes raisons.
-- Je vais essayer de travailler sur ce point pour améliorer ça, je pense qu'il y a des choses à faire encore.
+-   Dépendance à $\alpha_0$ : les niveaux d'hétérogénité pour l'export sont en fait controler par un paramètre $\alpha_0 = \sum_{i=0}^{n_{females}} \alpha_i * pollen\_repartition$, ils sont donc dépendant du nombre de femelles, du vecteur alpha et du paramètre de pollen repartition. En l'état, c'est probablement dangereux de faire varier deux des trois paramètres à la fois.
+-   Dans le même ordre d'idée, la notion de X fois plus attractives est trompeuse (il me semble) - pour les mêmes raisons.
+-   Je vais essayer de travailler sur ce point pour améliorer ça, je pense qu'il y a des choses à faire encore.
 
-__Trucs à venir__
+**Trucs à venir**
 
-On pourrait vraiment faire plein de choses avec des distributions de Dirichlet et on pourrait dailleurs même s'en passer dans certain cas (en faisant des tirages dans des multinomiales directement). Je pense qu'on peut creuser sur la construction de matrices pour représenter des situations biologiques (que l'on avait un peu discuté la dernière fois): histoires de phénologie, de localisation spatiales, ou d'autres formes d'export non aléatoires. Je pense qu'il existe les outils pour gérer assez facilement ce genre de choses avec les réseaux - ça me botte bien comme sujet. 
+On pourrait vraiment faire plein de choses avec des distributions de Dirichlet et on pourrait dailleurs même s'en passer dans certain cas (en faisant des tirages dans des multinomiales directement). Je pense qu'on peut creuser sur la construction de matrices pour représenter des situations biologiques (que l'on avait un peu discuté la dernière fois): histoires de phénologie, de localisation spatiales, ou d'autres formes d'export non aléatoires. Je pense qu'il existe les outils pour gérer assez facilement ce genre de choses avec les réseaux - ça me botte bien comme sujet.
 
-__Note__ : At this point (but also after), exact Matting Success (observed) can be computed from pollen repartition :
+**Note** : At this point (but also after), exact Matting Success (observed) can be computed from pollen repartition :
 
 ```{r}
 mso = ms_obs(pollen_repartition)
 mso
 ```
-
 
 #### Get male competitive values
 
@@ -209,7 +203,7 @@ males_comp_values = get_male_comp_values(n_males = n_males, distrib = rnorm, dis
 males_comp_values = get_male_comp_values(n_males = n_males, distrib = rbeta, dist_params = list(shape1 = 5, shape2 = 5), plot = T)
 ```
 
-Second, the competitive values can be drawn from a conditional Normal distribution, depending on another individual characteristic. Additional rho, the correlation between the feature and comp. values, and the feature have to be provided (parameter feature). (might try in future to implement that for other distributions). For example, inversely correlated with gametes production. 
+Second, the competitive values can be drawn from a conditional Normal distribution, depending on another individual characteristic. Additional rho, the correlation between the feature and comp. values, and the feature have to be provided (parameter feature). (might try in future to implement that for other distributions). For example, inversely correlated with gametes production.
 
 ```{r}
 
@@ -221,10 +215,9 @@ males_comp_values = get_male_comp_values_from_feature(mean_comp_value = 10,
 
 ```
 
-
 #### Pollen competition on sigma
 
-Now, pollen repartition is known as well as male competitive values. Who will win access to ovula is determined by male comp. values. 
+Now, pollen repartition is known as well as male competitive values. Who will win access to ovula is determined by male comp. values.
 
 ```{r}
 
@@ -236,7 +229,7 @@ Some infos on pollen limitation are displayed (should more info be returned ?), 
 
 #### Eggs abortion
 
-If needed, one can simulate eggs abortion - using either a constant value for all females or a vector of size n_female (shorter vectors will rise error - no vector recycling, it can be changed but I don't think it's a good practice). 
+If needed, one can simulate eggs abortion - using either a constant value for all females or a vector of size n_female (shorter vectors will rise error - no vector recycling, it can be changed but I don't think it's a good practice).
 
 ```{r}
 
@@ -246,7 +239,7 @@ fertilized_eggs = eggs_abortion(fertilized_eggs, aborded_fraction = 0)
 
 #### Correlated paternity
 
-Correlated paternity can be computed from fertilized_eggs list - the __correlated_paternity()__ function returns patternity correlations by female, while __pop_average_rp()__ returns the pop. level average patternity correlation (raw or corrected, following Dorken & Perry, 2017).
+Correlated paternity can be computed from fertilized_eggs list - the **correlated_paternity()** function returns patternity correlations by female, while **pop_average_rp()** returns the pop. level average patternity correlation (raw or corrected, following Dorken & Perry, 2017).
 
 ```{r}
 
@@ -257,9 +250,9 @@ pop_average_rp(correlated_paternity = correlated_paternity(fertilized_eggs),
 
 ### Sampling
 
-Various sampling can be used - check detailed documentation for each. 
+Various sampling can be used - check detailed documentation for each.
 
-Some examples : 
+Some examples :
 
 ```{r}
 sampled_fertilized_eggs = sampling_groundtruth(fertilized_eggs)
@@ -284,11 +277,11 @@ get_sexual_selection_components(fertilized_eggs = fertilized_eggs,
                                 n_males = n_males)
 ```
 
-With prorata strategy, plot showing upsampling effects can be displayed (using __upsampling_plot__ parameter) - it shows, for each the female, the initial number of eggs to sample (black dots), the minimal threshold (black dashed horizontal line), and the number of eggs to sample after upsampling (red dots). Crosses on the right indicate females that will be remove (because __min_threshold__ can't be reach, even with upsampling). 
+With prorata strategy, plot showing upsampling effects can be displayed (using **upsampling_plot** parameter) - it shows, for each the female, the initial number of eggs to sample (black dots), the minimal threshold (black dashed horizontal line), and the number of eggs to sample after upsampling (red dots). Crosses on the right indicate females that will be remove (because **min_threshold** can't be reach, even with upsampling).
 
-Once sampled eggs are available (__sampled_fertilized_eggs__ here), sexual selection base variables can be computed using __get_sexual_selection_components()__ function. It will return MS/RS for females and males. Note that paternity share can be (and is, by default) considered. Both __fertilized_eggs__ (before sampling) and __sampled_fertilized_eggs__ (after sampling) should be provided since females RS depends on eggs counts before sampling (and this need to be know to compute male RS while considering paternity share). 
+Once sampled eggs are available (**sampled_fertilized_eggs** here), sexual selection base variables can be computed using **get_sexual_selection_components()** function. It will return MS/RS for females and males. Note that paternity share can be (and is, by default) considered. Both **fertilized_eggs** (before sampling) and **sampled_fertilized_eggs** (after sampling) should be provided since females RS depends on eggs counts before sampling (and this need to be know to compute male RS while considering paternity share).
 
-__Note__ : some parameters combinations will rise errors (typically when requested total number of eggs can't be reached) - as it is, it will stop the job. I'm not sure it's the best behaviour (from a "security" viewpoint, it seems better instead of doing weird and not really controlled stuffs, but, from an automatisation viewpoint, it might break down pipeline - which can be boring when running batch of jobs...). 
+**Note** : some parameters combinations will rise errors (typically when requested total number of eggs can't be reached) - as it is, it will stop the job. I'm not sure it's the best behaviour (from a "security" viewpoint, it seems better instead of doing weird and not really controlled stuffs, but, from an automatisation viewpoint, it might break down pipeline - which can be boring when running batch of jobs...).
 
 While each method can be used one by one, a convenient wrapper can be used. It allows to : (i) specify multiple sampling strategy (that will be evaluate in turn), (ii) replicate each strategy a given number of time. Note that groundtruth is automatically computed (without need for further specification).
 
@@ -316,10 +309,9 @@ descp_stats
 
 ```
 
-Returned statustucs are; observed mating success (mean and sd, mso_mean and mso_sd resp.) - computed from __mso()__ function (i.e. computed from where pollen land), genetic mating success (mean and sd, msg_mean and msg_sd) computed after sampling (except when sampling_method is <base>, in which case, values displayed correspond to "true" genetic mating success - number of mate after pollen competition but before sampling) and lastly, reproductive success (rsg_mean and rsg_sd). 
+Returned statustucs are; observed mating success (mean and sd, mso_mean and mso_sd resp.) - computed from **mso()** function (i.e. computed from where pollen land), genetic mating success (mean and sd, msg_mean and msg_sd) computed after sampling (except when sampling_method is <base>, in which case, values displayed correspond to "true" genetic mating success - number of mate after pollen competition but before sampling) and lastly, reproductive success (rsg_mean and rsg_sd).
 
 Descriptive statistics table can be easily converted to long format (e.g. for plotting purpose), using the following:
-
 
 ```{r}
 descp_stats %>%
@@ -328,26 +320,25 @@ descp_stats %>%
                   names_pattern = "(.*)_(.*)" )
 ```
 
-
 ### Gradients
 
-Lastly, Bateman gradients can be estimated in turn from output of the sampling method; MS and RS can be scaled (using weird but apparently correct ; $\tilde x = \frac{x}{\bar x}$, with the __scaled__ parameter, which is True by default), and GLM family can also be specified (Gaussian by default). Any family accepted by lme4::glm() can be specify (e.g. poisson, quasipoisson). (might implement more options in future, e.g. negative binomial ?). If __n_gam__ is available in the dataframe (by default __sampling()__ function return those, although it might not be known for males in real situations), additional partial Bateman gradients are also computed (i.e. rs ~ (ms + n_gam) * sex). 
+Lastly, Bateman gradients can be estimated in turn from output of the sampling method; MS and RS can be scaled (using weird but apparently correct ; $\tilde x = \frac{x}{\bar x}$, with the **scaled** parameter, which is True by default), and GLM family can also be specified (Gaussian by default). Any family accepted by lme4::glm() can be specify (e.g. poisson, quasipoisson). (might implement more options in future, e.g. negative binomial ?). If **n_gam** is available in the dataframe (by default **sampling()** function return those, although it might not be known for males in real situations), additional partial Bateman gradients are also computed (i.e. rs \~ (ms + n_gam) \* sex).
 
-Returned results contain two elements : (i) one named 'gradients' with sampling_method, parameters, inferred gradients and differences to base gradients, (ii) one names 'glms' with sampling_method, parameters, parameters_string, data, glms results, and main coefficients. 
+Returned results contain two elements : (i) one named 'gradients' with sampling_method, parameters, inferred gradients and differences to base gradients, (ii) one names 'glms' with sampling_method, parameters, parameters_string, data, glms results, and main coefficients.
 
-__Note__ ; as it is, no R2 is returned since we implement GLMs (check whether it make sense to add id - for Gaussian model, no question, but what about Poisson ? see e.g. [Stack](https://stats.stackexchange.com/questions/551915/interpreting-nonlinear-regression-r2), we could use Pseudo-R2, is it what we want ?)
-
+**Note** ; as it is, no R2 is returned since we implement GLMs (check whether it make sense to add id - for Gaussian model, no question, but what about Poisson ? see e.g. [Stack](https://stats.stackexchange.com/questions/551915/interpreting-nonlinear-regression-r2), we could use Pseudo-R2, is it what we want ?)
 
 ```{r}
 
 gradients = fit_gradients(samples, scaled = TRUE)
 
-gradients
+gradients$gradients
 
 ```
 
-__Temporary plots__ ; have to work a bit on those (not really usefull for simulation purpose)
+Results (in the subtable gradients) are the estimated gradients (starting with "abs_") and also the delta between estimated gradient (after sampling) vs. the 'true' gradient (from 'base', i.e., the true genetic ms/rs if all eggs were sampled) - starting with 'delta_'. 
 
+**Temporary plots** ; have to work a bit on those (not really usefull for simulation purpose)
 
 ```{r}
 
@@ -362,8 +353,8 @@ for(i in 1:nrow(gradients$glms)){
   plot_list[[i]] = ggplot( (gradients$glms %>% pull(data))[[i]], aes(x = msg, y = rsg, color = sex))+
     geom_point()+
     geom_smooth(method='lm')+
+    labs(title = (gradients$glms %>% pull(sampling_method))[[i]])+
     theme_bw()
 }
 cowplot::plot_grid(plotlist = plot_list)
 ```
-

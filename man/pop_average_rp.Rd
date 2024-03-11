@@ -18,5 +18,5 @@ List of two elements, the uncorrected pop. average correlated paternity and the 
 Return population average correlated paternity - using Dorken & Perry method and potential correction.
 }
 \details{
-Compute pop. average correlated paternity (following Dorken & Perry, 2017) and corrected version.
+Compute pop. average correlated paternity (following Dorken & Perry, 2017) and corrected version (pop average * (n_male - 1)).
 }
