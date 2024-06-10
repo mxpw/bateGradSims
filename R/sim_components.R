@@ -17,9 +17,10 @@
 #' @param female_distrib_params If distribution for female needs more than the mean, provide additional arguments
 #' @param male_distrib_params If distribution for female needs more than the mean, provide additional arguments (here, Coefficient of variation)
 #'
-#' @details Implemented distributions for males/females are 'poisson' and 'normal' - others might be possible in the future.
+#' @details Implemented distributions for males/females are 'poisson', 'normal' or 'constant' - others might be possible in the future.
 #' Normal distribution allows user to specify larger variance (by specifying the coefficient of variation) than expected with the more constrained Poisson distribution. The standard deviation
 #' of the distribution is computed as 'cv x mean', cv being the X_distrib_params parameters, and the obtained values are then rounded.
+#' Note that the 'constant' behaviour is redondant - can be done directly from 'normal' distribution with a null variation coefficient.
 #'
 #' Note: if used distribution can lead to negatives values, these will be set to zero before being returned.
 #'
@@ -42,6 +43,8 @@ gametes_drawing = function(n_females = 100, n_males = 100, mean_gamete_female = 
     gam_female = round(rnorm(n = n_females,
                              mean = mean_gamete_female,
                              sd = (female_distrib_params * mean_gamete_female) ))
+  }else if(female_distrib == "constant"){
+    gam_female = rep(mean_gamete_female, n_females)
   }else{
     stop("Provided distribution is not implemented !")
   }
@@ -53,6 +56,8 @@ gametes_drawing = function(n_females = 100, n_males = 100, mean_gamete_female = 
     gam_male = round(rnorm(n = n_males,
                            mean = mean_gamete_female * ratio_gamete,
                            sd = (male_distrib_params * mean_gamete_female * ratio_gamete) ))
+  }else if(male_distrib == 'constant'){
+    gam_male = rep(mean_gamete_female * ratio_gamete, n_males)
   }else{
     stop("Provided distribution is not implemented !")
   }
@@ -444,11 +449,19 @@ fit_gradients = function(samples, family = 'gaussian', scaled = TRUE){
 
   # Get slopes
   glms = glms %>% mutate(slopes_noGamControl = list(tibble(sex = c('F', 'M'),
-                                                           slopes = c( lm_noGamControl$coefficients[['msg']], lm_noGamControl$coefficients[['msg:sexM']] ))))
+                                                           slopes = c( lm_noGamControl$coefficients[['msg']],
+                                                                       lm_noGamControl$coefficients[['msg']] + lm_noGamControl$coefficients[['msg:sexM']] ),
+                                                           se = c( summary(lm_noGamControl)$coefficients[, 'Std. Error'][['msg']],
+                                                                   # summary(lm_noGamControl)$coefficients[, 'Std. Error'][['msg:sexM']],
+                                                                   NA))))
 
   if(n_gam_available)
     glms = glms %>% mutate(slopes_gamControl = list(tibble(sex = c('F', 'M'),
-                                                           slopes = c( lm_gamControl$coefficients[['msg']], lm_gamControl$coefficients[['msg:sexM']] ))))
+                                                           slopes = c( lm_gamControl$coefficients[['msg']],
+                                                                       lm_gamControl$coefficients[['msg']] + lm_gamControl$coefficients[['msg:sexM']] ),
+                                                           se = c( summary(lm_noGamControl)$coefficients[, 'Std. Error'][['msg']],
+                                                                   # summary(lm_noGamControl)$coefficients[, 'Std. Error'][['msg:sexM']],
+                                                                   NA))))
 
   # Compute deltas
   base_noGamControl = (glms %>% filter(.data$sampling_method == 'base') %>% pull(.data$slopes_noGamControl))[[1]]
@@ -457,20 +470,24 @@ fit_gradients = function(samples, family = 'gaussian', scaled = TRUE){
     base_gamControl = (glms %>% filter(.data$sampling_method == 'base') %>% pull(.data$slopes_gamControl))[[1]]
 
   glms = glms %>% ungroup() %>% mutate(abs_female_noGamControl = map_dbl(.data$slopes_noGamControl, .f = function(x) x[x$sex=='F', 2][[1]]),
+                                       se_female_noGamControl = map_dbl(.data$slopes_noGamControl, .f = function(x) x[x$sex=='F', 3][[1]]),
                                        delta_female_noGamControl = map_dbl(.data$abs_female_noGamControl,
                                                                            .f = function(x) x - (base_noGamControl %>% filter(.data$sex=="F") %>% pull(.data$slopes)) ),
                                        abs_male_noGamControl = map_dbl(.data$slopes_noGamControl, .f = function(x) x[x$sex=='M', 2][[1]]),
+                                       se_male_noGamControl = map_dbl(.data$slopes_noGamControl, .f = function(x) x[x$sex=='M', 3][[1]]),
                                        delta_male_noGamControl = map_dbl(.data$abs_male_noGamControl,
                                                                          .f = function(x) x - (base_noGamControl %>% filter(.data$sex=="M") %>% pull(.data$slopes)) ))
 
   if(n_gam_available)
     glms = glms %>% ungroup() %>% mutate(abs_female_gamControl = map_dbl(.data$slopes_gamControl, .f = function(x) x[x$sex=='F', 2][[1]] ),
+                                         se_female_gamControl = map_dbl(.data$slopes_gamControl, .f = function(x) x[x$sex=='F', 3][[1]] ),
                                          delta_female_gamControl = map_dbl(.data$abs_female_gamControl,
                                                                            .f = function(x) x - (base_gamControl %>% filter(.data$sex=="F") %>% pull(.data$slopes)) ),
                                          abs_male_gamControl = map_dbl(.data$slopes_gamControl, .f = function(x) x[x$sex=='M', 2][[1]] ),
+                                         se_male_gamControl = map_dbl(.data$slopes_gamControl, .f = function(x) x[x$sex=='M', 3][[1]] ),
                                          delta_male_gamControl = map_dbl(.data$abs_male_gamControl,
                                                                          .f = function(x) x - (base_gamControl %>% filter(.data$sex=="M") %>% pull(.data$slopes)) ))
 
   return(list(gradients = glms %>% select(-starts_with(c("slopes_", "lm_")), -.data$data),
-              glms = glms %>% select(-starts_with(c('female_', 'male_', 'delta_', 'slopes_')))))
+              glms = glms %>% select(-starts_with(c('female_', 'male_', 'delta_', 'slopes_', 'se_')))))
 }

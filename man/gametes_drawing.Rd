@@ -39,9 +39,10 @@ List with two vectors (gam_female, gam_male)
 Draw the number of gametes per individual.
 }
 \details{
-Implemented distributions for males/females are 'poisson' and 'normal' - others might be possible in the future.
+Implemented distributions for males/females are 'poisson', 'normal' or 'constant' - others might be possible in the future.
 Normal distribution allows user to specify larger variance (by specifying the coefficient of variation) than expected with the more constrained Poisson distribution. The standard deviation
 of the distribution is computed as 'cv x mean', cv being the X_distrib_params parameters, and the obtained values are then rounded.
+Note that the 'constant' behaviour is redondant - can be done directly from 'normal' distribution with a null variation coefficient.
 
 Note: if used distribution can lead to negatives values, these will be set to zero before being returned.
 

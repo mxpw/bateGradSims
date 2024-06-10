@@ -17,7 +17,7 @@ gametes = gametes_drawing(n_females = n_females, n_males = n_males,
 # Get males comp. values (either using uniform, normal, beta or any distributions)
 males_comp_values = get_male_comp_values(n_males = n_males, distrib = sample, dist_params = list(x=1:100, replace = TRUE), plot = T)
 males_comp_values = get_male_comp_values(n_males = n_males, distrib = sample, dist_params = list(x=c(49:50), replace = TRUE), plot = T)
-# males_comp_values = get_male_comp_values(n_males = n_males, distrib = rnorm, dist_params = list(mean = 100, sd = 10), plot = T)
+# males_comp_values = get_male_comp_values(n_males = n_males, distrib = rnorm, dist_params = list(mean = 100, sd = 0), plot = T)
 # males_comp_values = get_male_comp_values(n_males = n_males, distrib = rbeta, dist_params = list(shape1 = 5, shape2 = 5), plot = T)
 
 
@@ -70,6 +70,28 @@ sampled_fertilized_eggs = sampling_random(fertilized_eggs, n_males)
 get_sexual_selection_components(fertilized_eggs = fertilized_eggs,
                                 sampled_fertilized_eggs = sampled_fertilized_eggs,
                                 n_males = n_males)
+
+sampled_fertilized_eggs = sampling_groundtruth(fertilized_eggs)
+selection_components = get_sexual_selection_components(fertilized_eggs = fertilized_eggs,
+                                sampled_fertilized_eggs = sampled_fertilized_eggs,
+                                n_males = n_males)
+
+library(tidyverse)
+tab = tibble::tibble(msg = c(selection_components$msg_female, selection_components$msg_male),
+       rsg = c(selection_components$rsg_female, selection_components$rsg_male),
+       n_gam = c(gametes$gam_female, gametes$gam_male),
+       sex = c(rep("F", n_females), rep("M", n_males)))
+
+# If scaling is needed
+tab = tab %>%
+  group_by(sex) %>%
+  mutate(across(msg:rsg, ~ .x / mean(.x, na.rm = T))) %>%
+  ungroup()
+
+# Bateman
+summary(glm(data = tab, "rsg ~ msg * sex", family = gaussian))
+# Partial Bateman
+summary(glm(data = tab, "rsg ~ (msg + n_gam) * sex", family = gaussian))
 
 
 # To avoid repetition and extra-gathering work, one can use the sampling() function to use multiple sampling methods (given as list as follow)
