@@ -2,6 +2,7 @@
 
 export(correlated_paternity)
 export(descriptive_stats)
+export(dummy)
 export(eggs_abortion)
 export(fit_gradients)
 export(gametes_drawing)

@@ -363,6 +363,26 @@ pollen_competition = function(pollen_repartition, males_comp_values, gametes_by_
   female_desc
 }
 
+#' Dummy example
+#'
+#' Do nothing, just for the example
+#'
+#' @param napa useless
+#'
+#' @details still useless
+#'
+#' @return nothing
+#'
+#' @export
+#'
+#'
+
+dummy = function(napa){
+  NULL
+}
+
+
+
 #' Eggs abortion
 #'
 #' Discount fertilized eggs from females - simulates abortion
