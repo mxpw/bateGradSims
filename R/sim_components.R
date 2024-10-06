@@ -363,6 +363,45 @@ pollen_competition = function(pollen_repartition, males_comp_values, gametes_by_
   female_desc
 }
 
+#' Pollen limitation
+#'
+#' Estimating metrics about the level of pollen competition
+#'
+#' @param gametes_by_female       Vector of number of gametes by females (e.g., from gametes_drawing() function) (no default)
+#' @param fertilized_eggs List of females' eggs with fathers identities (e.g. output from pollen_competition()) (no default)
+#'
+#' @details Return details about the level of pollen limitation: how many eggs have not been fertilized, among how many females.
+#'
+#' @return Number of eggs not fertilized, percentage of eggs not fertilized, number of females with eggs unfertilized, percentage of female with eggs unfertilized
+#'
+#' @export
+#'
+
+pollen_limitation = function(gametes_by_female, fertilized_eggs){
+
+    unfertilized_eggs = gametes_by_female - sapply(fertilized_eggs, length)
+    if ( any(unfertilized_eggs > 0) ){
+
+      females_with_pollen_limitation = sum(unfertilized_eggs > 0)
+      female_percent = round( 100 * females_with_pollen_limitation / length(gametes_by_female), 2)
+
+      eggs_unfertilized = sum(unfertilized_eggs)
+      egg_percent = round( eggs_unfertilized / sum(gametes_by_female) , 2)
+
+    }else{
+      print("No pollen limitation (all eggs are fertilized)")
+      females_with_pollen_limitation = 0
+      female_percent = 0
+      eggs_unfertilized = 0
+      egg_percent = 0
+    }
+
+    return(list(nb_females_with_pl = females_with_pollen_limitation,
+                percent_females_with_pl = female_percent,
+                nb_egg_with_pl = eggs_unfertilized,
+                percent_egg_with_pl = egg_percent))
+}
+
 #' Eggs abortion
 #'
 #' Discount fertilized eggs from females - simulates abortion
