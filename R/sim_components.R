@@ -367,8 +367,8 @@ pollen_competition = function(pollen_repartition, males_comp_values, gametes_by_
 #'
 #' Estimating metrics about the level of pollen competition
 #'
-#' @param gametes_by_female       Vector of number of gametes by females (e.g., from gametes_drawing() function) (no default)
-#' @param fertilized_eggs List of females' eggs with fathers identities (e.g. output from pollen_competition()) (no default)
+#' @param gametes_by_female Vector of number of gametes by females (e.g., from gametes_drawing() function) (no default)
+#' @param fertilized_eggs   List of females' eggs with fathers identities (e.g. output from pollen_competition()) (no default)
 #'
 #' @details Return details about the level of pollen limitation: how many eggs have not been fertilized, among how many females.
 #'
