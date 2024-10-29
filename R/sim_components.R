@@ -245,6 +245,9 @@ sample_handmade = function(x, size, prob = NULL){
 pollen_export = function(n_females = NULL, baseline_alpha = NULL,
                          pollen_repartition = c(0.01), plot = FALSE, gametes_by_male = NULL){
 
+  MIN_ALPHA_ZERO = 1e-04
+  MAX_RETRY = 10 # à commenter et à ajouter comme argument
+
   if(is.null(gametes_by_male))
     stop("agument 'gametes_by_male' is missing, with no default")
 
@@ -270,7 +273,16 @@ pollen_export = function(n_females = NULL, baseline_alpha = NULL,
     stop('Argument pollen_repartition is badly formatted, check help("pollen_export")')
   }
 
-  dirichlet_draw = sapply(male_gamete_export_heterogeneity, FUN = function(x) rdirichlet(1, alpha = baseline_alpha * x) )
+  male_gamete_export_heterogeneity[male_gamete_export_heterogeneity < MIN_ALPHA_ZERO] = MIN_ALPHA_ZERO
+
+  for(i in 1:MAX_RETRY){
+    dirichlet_draw = sapply(male_gamete_export_heterogeneity, FUN = function(x) rdirichlet(1, alpha = baseline_alpha * x) )
+    if(!any(is.na(dirichlet_draw))) break
+    if(i==MAX_RETRY) {
+      stop("Max retry for dirichlet draw... there is some issue with alpha provided (usually, far to low values - below 1e-04)")
+    }
+  }
+
   male_gamete_repartition = matrix(nrow = n_females, ncol = n_males)
   for(i in 1:n_males)
     male_gamete_repartition[,i] = rmultinom(1, gametes_by_male[i], dirichlet_draw[,i])

@@ -1,10 +1,9 @@
 library(bateGradSims)
 
-n_females = 10
-n_males = 10
+n_females = 50
+n_males = 50
 n_gamete_fem = 250
-ratio_gamete = 0.8
-# ratio_gamete = 10
+ratio_gamete = 1
 cv_normal_male = 0.1
 
 # set.seed(42)
