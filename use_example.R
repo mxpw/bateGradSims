@@ -3,7 +3,7 @@ library(bateGradSims)
 n_females = 10
 n_males = 10
 n_gamete_fem = 250
-ratio_gamete = 400
+ratio_gamete = 0.8
 # ratio_gamete = 10
 cv_normal_male = 0.1
 
@@ -39,6 +39,9 @@ mso = ms_obs(pollen_repartition)
 
 # Pollen competition, i.e., who fertilizes who
 fertilized_eggs = pollen_competition(pollen_repartition, males_comp_values, gametes$gam_female)
+
+# Pollen limitations stats
+pollen_limitation_stats = pollen_limitation(gametes$gam_female,fertilized_eggs)
 
 # Aborted eggs
 fertilized_eggs = eggs_abortion(fertilized_eggs, aborded_fraction = 0)
