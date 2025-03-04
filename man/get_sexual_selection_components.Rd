@@ -21,12 +21,12 @@ get_sexual_selection_components(
 \item{paternity_share}{Should males RS be rescaled by total number of females eggs (default TRUE)}
 }
 \value{
-List containing MS & RS for females and males
+List containing MSg & RS for females and males
 }
 \description{
 Compute RS/MS (genetic - i.e. in the sens of 'from fertilized eggs')
 }
 \details{
-Compute mating success (i.e. number of 'genetic' mates) and reproductive success (i.e. number of offspring) for males and females.
+Compute mating success and reproductive success (i.e. number of offspring) for males and females.
 Paternity share is considered by default (see paternity_share argument), and females RS is always compute from all eggs (not sampled ones).
 }
