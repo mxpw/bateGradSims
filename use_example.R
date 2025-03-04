@@ -56,6 +56,8 @@ sampled_fertilized_eggs = sampling_groundtruth(fertilized_eggs)
 get_sexual_selection_components(fertilized_eggs = fertilized_eggs,
                                 sampled_fertilized_eggs = sampled_fertilized_eggs,
                                 n_males = n_males)
+# The next function is only applicable for sampling groundtruth at the moment
+compute_msgc(fertilized_eggs)
 
 sampled_fertilized_eggs = sampling_fixed(fertilized_eggs, n_males, by_female_samples = 50, undercount_female = 'keep')
 get_sexual_selection_components(fertilized_eggs = fertilized_eggs,

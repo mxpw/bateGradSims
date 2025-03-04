@@ -8,10 +8,10 @@
 #' @param n_males Number of males (no default)
 #' @param paternity_share Should males RS be rescaled by total number of females eggs (default TRUE)
 #'
-#' @details Compute mating success (i.e. number of 'genetic' mates) and reproductive success (i.e. number of offspring) for males and females.
+#' @details Compute mating success and reproductive success (i.e. number of offspring) for males and females.
 #' Paternity share is considered by default (see paternity_share argument), and females RS is always compute from all eggs (not sampled ones).
 #'
-#' @return List containing MS & RS for females and males
+#' @return List containing MSg & RS for females and males
 #'
 #' @export
 #'
@@ -44,6 +44,137 @@ get_sexual_selection_components = function( fertilized_eggs, sampled_fertilized_
               rsg_female = rsg_female,
               msg_male = msg_male,
               rsg_male = rsg_male))
+}
+
+#' xxxxx
+#'
+#' xxxxx
+#'
+#'
+#' @details xxx
+#'
+#' @return xxxx
+#'
+# Il ne faut pas mettre de @export, on conserve comme fonction interne (les gens qui utiilisent le paquet ne peuvent pas l'utiliser, et ne savent pas qu'elle existe.)
+#'
+#'
+#'
+
+# Function to calculate Qfoc for a given group (mothers or fathers)
+compute_Qfoc <- function(focal_list, is_mother = TRUE) {
+  Qfoc <- numeric(length(focal_list))
+
+  for (i in seq_along(focal_list)) {
+    pairs <- table(focal_list[[i]])  # Count occurrences of each father for this mother
+    prod_couple <- sum(pairs * (pairs - 1))  # Product of pairs (count * (count - 1))
+    Qfoc[i] <- prod_couple
+  }
+
+  return(Qfoc)
+}
+
+#' idem, je te laisse compléter si nécessaire (pense à générer la doc avant aussi (build -> check))
+#'
+compute_Q <- function(focal_list, method = "min") {
+  Q <- numeric(length(focal_list))  # Initialize result vector
+
+  # Step 1: Calculate the total seeds produced by each parent (all parents combined)
+  total_counts <- table(unlist(focal_list))
+  total_counts_df <- data.frame(parent = as.numeric(names(total_counts)), total = as.numeric(total_counts))
+
+  for (i in seq_along(focal_list)) {
+    parents <- focal_list[[i]]
+
+    # Step 2: Count the seeds produced specifically with the focal individual
+    parent_counts <- table(parents)
+    parent_df <- data.frame(parent = as.numeric(names(parent_counts)), count = as.numeric(parent_counts))
+
+    # Step 3: Add parents absent from the relationship but present in `total_counts_df`
+    parent_df <- merge(total_counts_df, parent_df, by = "parent", all.x = TRUE)
+    parent_df$count[is.na(parent_df$count)] <- 0  # Replace NA with 0
+
+    # Step 4: Sort parents by their total seed production (in descending order)
+    parent_df <- parent_df[order(-parent_df$total), ]
+
+    # Step 5: Distribute seeds based on the chosen method
+    parent_df$allocated_seeds <- rep(0, nrow(parent_df))
+    remaining_seeds <- sum(parent_df$count)
+
+    if (method == "min") {
+      # Most equitable distribution possible
+      index <- 1
+      while (remaining_seeds > 0) {
+        if (parent_df$total[index] > 0) {
+          parent_df$allocated_seeds[index] <- parent_df$allocated_seeds[index] + 1
+          parent_df$total[index] <- parent_df$total[index] - 1
+          remaining_seeds <- remaining_seeds - 1
+        }
+        index <- ifelse(index == nrow(parent_df), 1, index + 1)  # Circular rotation
+      }
+    } else if (method == "max") {
+      # Most imbalanced distribution possible
+      index <- 1
+      while (remaining_seeds > 0) {
+        max_allocatable <- min(parent_df$total[index], remaining_seeds)
+        parent_df$allocated_seeds[index] <- parent_df$allocated_seeds[index] + max_allocatable
+        remaining_seeds <- remaining_seeds - max_allocatable
+        index <- index + 1  # Move to the next parent
+      }
+    } else {
+      stop("Invalid method. Use 'min' or 'max'.")
+    }
+
+    # Step 6: Calculate Q
+    Q[i] <- sum(parent_df$allocated_seeds * (parent_df$allocated_seeds - 1))
+  }
+
+  return(Q)
+}
+
+
+#' Corrected genetic mating success
+#'
+#' Compute corrected genetic mating success MSgc using F. Rousset's metric
+#' For the moment, this function is only applicable to all the seeds produced (i.e. sampling_groundtruth function, no sampling).
+#'
+#'
+#' @param fertilized_eggs List of size n_females containing father for each fertilized eggs (from e.g., pollen_competition() function)
+#'
+#' @details Compute genetic mating success for males and females with a correction to avoid a possible artificial correlation between RS/MSg.
+#'
+#' @return List containing corrected MSg (MSgc) for females and males
+#'
+#' @export
+#'
+
+compute_msgc <- function(fertilized_eggs) {
+
+  # List of mothers and fathers
+  mothers <- seq_along(fertilized_eggs)  # IDs of mothers
+  fathers <- unique(unlist(fertilized_eggs))  # IDs of unique fathers
+
+  # Calculate Qfoc for females and males
+  Qfoc_female <- compute_Qfoc(fertilized_eggs, is_mother = TRUE)
+
+  # Reverse the list to obtain the fathers
+  list_fathers <- split(rep(mothers, sapply(fertilized_eggs, length)), unlist(fertilized_eggs))
+  Qfoc_male <- compute_Qfoc(list_fathers, is_mother = FALSE)
+
+  # Calculate Qmin and Qmax for females
+  Qmin_female <- compute_Q(fertilized_eggs, method = "min")
+  Qmax_female <- compute_Q(fertilized_eggs, method = "max")
+
+  # Calculate Qmin and Qmax for males
+  Qmin_male <- compute_Q(list_fathers, method = "min")
+  Qmax_male <- compute_Q(list_fathers, method = "max")
+
+  # Calculate msgc_female and msgc_male
+  msgc_female <- (Qfoc_female - Qmin_female) / (Qmax_female - Qmin_female)
+  msgc_male <- (Qfoc_male - Qmin_male) / (Qmax_male - Qmin_male)
+
+  # Return the results
+  return(list(msgc_female = msgc_female,
+              msgc_male = msgc_male))
 }
 
 #' Sampling ground-truth
@@ -478,8 +609,10 @@ sampling = function(fertilized_eggs, n_males, methods = NULL, mso = NULL, gamete
   # Get true MS/RS (no sampling)
   sampled_fertilized_eggs = sampling_groundtruth(fertilized_eggs)
   spl = get_sexual_selection_components(fertilized_eggs, sampled_fertilized_eggs, n_males)
+  msgc_result = compute_msgc(fertilized_eggs)
   tmp = tibble(mso = mso_vec,
                msg = c(spl$msg_female, spl$msg_male),
+               msgc = c(msgc_result$msgc_female, msgc_result$msgc_male),
                rsg = c(spl$rsg_female, spl$rsg_male),
                n_gam = gam_vec,
                sex = c(rep("F", n_females), rep("M", n_males)),
@@ -495,6 +628,7 @@ sampling = function(fertilized_eggs, n_males, methods = NULL, mso = NULL, gamete
       spl = get_sexual_selection_components(fertilized_eggs, sampled_fertilized_eggs, n_males)
       tmp = tibble(mso = mso_vec,
                    msg = c(spl$msg_female, spl$msg_male),
+                   msgc = NA,
                    rsg = c(spl$rsg_female, spl$rsg_male),
                    n_gam = gam_vec,
                    sex = c(rep("F", n_females), rep("M", n_males)),
