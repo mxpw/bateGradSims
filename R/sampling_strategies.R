@@ -46,6 +46,92 @@ get_sexual_selection_components = function( fertilized_eggs, sampled_fertilized_
               rsg_male = rsg_male))
 }
 
+#' xxxxx
+#'
+#' xxxxx
+#'
+#'
+#' @details xxx
+#'
+#' @return xxxx
+#'
+# Il ne faut pas mettre de @export, on conserve comme fonction interne (les gens qui utiilisent le paquet ne peuvent pas l'utiliser, et ne savent pas qu'elle existe.)
+#'
+#'
+#'
+
+# Function to calculate Qfoc for a given group (mothers or fathers)
+compute_Qfoc <- function(focal_list, is_mother = TRUE) {
+  Qfoc <- numeric(length(focal_list))
+
+  for (i in seq_along(focal_list)) {
+    pairs <- table(focal_list[[i]])  # Count occurrences of each father for this mother
+    prod_couple <- sum(pairs * (pairs - 1))  # Product of pairs (count * (count - 1))
+    Qfoc[i] <- prod_couple
+  }
+
+  return(Qfoc)
+}
+
+#' idem, je te laisse compléter si nécessaire (pense à générer la doc avant aussi (build -> check))
+#'
+compute_Q <- function(focal_list, method = "min") {
+  Q <- numeric(length(focal_list))  # Initialize result vector
+
+  # Step 1: Calculate the total seeds produced by each parent (all parents combined)
+  total_counts <- table(unlist(focal_list))
+  total_counts_df <- data.frame(parent = as.numeric(names(total_counts)), total = as.numeric(total_counts))
+
+  for (i in seq_along(focal_list)) {
+    parents <- focal_list[[i]]
+
+    # Step 2: Count the seeds produced specifically with the focal individual
+    parent_counts <- table(parents)
+    parent_df <- data.frame(parent = as.numeric(names(parent_counts)), count = as.numeric(parent_counts))
+
+    # Step 3: Add parents absent from the relationship but present in `total_counts_df`
+    parent_df <- merge(total_counts_df, parent_df, by = "parent", all.x = TRUE)
+    parent_df$count[is.na(parent_df$count)] <- 0  # Replace NA with 0
+
+    # Step 4: Sort parents by their total seed production (in descending order)
+    parent_df <- parent_df[order(-parent_df$total), ]
+
+    # Step 5: Distribute seeds based on the chosen method
+    parent_df$allocated_seeds <- rep(0, nrow(parent_df))
+    remaining_seeds <- sum(parent_df$count)
+
+    if (method == "min") {
+      # Most equitable distribution possible
+      index <- 1
+      while (remaining_seeds > 0) {
+        if (parent_df$total[index] > 0) {
+          parent_df$allocated_seeds[index] <- parent_df$allocated_seeds[index] + 1
+          parent_df$total[index] <- parent_df$total[index] - 1
+          remaining_seeds <- remaining_seeds - 1
+        }
+        index <- ifelse(index == nrow(parent_df), 1, index + 1)  # Circular rotation
+      }
+    } else if (method == "max") {
+      # Most imbalanced distribution possible
+      index <- 1
+      while (remaining_seeds > 0) {
+        max_allocatable <- min(parent_df$total[index], remaining_seeds)
+        parent_df$allocated_seeds[index] <- parent_df$allocated_seeds[index] + max_allocatable
+        remaining_seeds <- remaining_seeds - max_allocatable
+        index <- index + 1  # Move to the next parent
+      }
+    } else {
+      stop("Invalid method. Use 'min' or 'max'.")
+    }
+
+    # Step 6: Calculate Q
+    Q[i] <- sum(parent_df$allocated_seeds * (parent_df$allocated_seeds - 1))
+  }
+
+  return(Q)
+}
+
+
 #' Corrected genetic mating success
 #'
 #' Compute corrected genetic mating success MSgc using F. Rousset's metric
@@ -66,76 +152,6 @@ compute_msgc <- function(fertilized_eggs) {
   # List of mothers and fathers
   mothers <- seq_along(fertilized_eggs)  # IDs of mothers
   fathers <- unique(unlist(fertilized_eggs))  # IDs of unique fathers
-
-  # Function to calculate Qfoc for a given group (mothers or fathers)
-  compute_Qfoc <- function(focal_list, is_mother = TRUE) {
-    Qfoc <- numeric(length(focal_list))
-
-    for (i in seq_along(focal_list)) {
-      pairs <- table(focal_list[[i]])  # Count occurrences of each father for this mother
-      prod_couple <- sum(pairs * (pairs - 1))  # Product of pairs (count * (count - 1))
-      Qfoc[i] <- prod_couple
-    }
-
-    return(Qfoc)
-  }
-
-  # Function to calculate Qmin or Qmax
-  compute_Q <- function(focal_list, method = "min") {
-    Q <- numeric(length(focal_list))  # Initialize result vector
-
-    # Step 1: Calculate the total seeds produced by each parent (all parents combined)
-    total_counts <- table(unlist(focal_list))
-    total_counts_df <- data.frame(parent = as.numeric(names(total_counts)), total = as.numeric(total_counts))
-
-    for (i in seq_along(focal_list)) {
-      parents <- focal_list[[i]]
-
-      # Step 2: Count the seeds produced specifically with the focal individual
-      parent_counts <- table(parents)
-      parent_df <- data.frame(parent = as.numeric(names(parent_counts)), count = as.numeric(parent_counts))
-
-      # Step 3: Add parents absent from the relationship but present in `total_counts_df`
-      parent_df <- merge(total_counts_df, parent_df, by = "parent", all.x = TRUE)
-      parent_df$count[is.na(parent_df$count)] <- 0  # Replace NA with 0
-
-      # Step 4: Sort parents by their total seed production (in descending order)
-      parent_df <- parent_df[order(-parent_df$total), ]
-
-      # Step 5: Distribute seeds based on the chosen method
-      parent_df$allocated_seeds <- rep(0, nrow(parent_df))
-      remaining_seeds <- sum(parent_df$count)
-
-      if (method == "min") {
-        # Most equitable distribution possible
-        index <- 1
-        while (remaining_seeds > 0) {
-          if (parent_df$total[index] > 0) {
-            parent_df$allocated_seeds[index] <- parent_df$allocated_seeds[index] + 1
-            parent_df$total[index] <- parent_df$total[index] - 1
-            remaining_seeds <- remaining_seeds - 1
-          }
-          index <- ifelse(index == nrow(parent_df), 1, index + 1)  # Circular rotation
-        }
-      } else if (method == "max") {
-        # Most imbalanced distribution possible
-        index <- 1
-        while (remaining_seeds > 0) {
-          max_allocatable <- min(parent_df$total[index], remaining_seeds)
-          parent_df$allocated_seeds[index] <- parent_df$allocated_seeds[index] + max_allocatable
-          remaining_seeds <- remaining_seeds - max_allocatable
-          index <- index + 1  # Move to the next parent
-        }
-      } else {
-        stop("Invalid method. Use 'min' or 'max'.")
-      }
-
-      # Step 6: Calculate Q
-      Q[i] <- sum(parent_df$allocated_seeds * (parent_df$allocated_seeds - 1))
-    }
-
-    return(Q)
-  }
 
   # Calculate Qfoc for females and males
   Qfoc_female <- compute_Qfoc(fertilized_eggs, is_mother = TRUE)
