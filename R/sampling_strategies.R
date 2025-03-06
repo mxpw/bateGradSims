@@ -167,6 +167,7 @@ compute_Q <- function(focal_list, method = "min") {
 #' @details Compute genetic mating success for males and females with a correction to avoid a possible artificial correlation between RS/MSg.
 #'
 #' @return List containing corrected MSg (MSgc) for females and males
+#' @importFrom dplyr left_join
 #'
 #' @export
 #'

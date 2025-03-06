@@ -4,7 +4,7 @@
 \alias{compute_msgc}
 \title{Corrected genetic mating success}
 \usage{
-compute_msgc(fertilized_eggs)
+compute_msgc(fertilized_eggs, n_males)
 }
 \arguments{
 \item{fertilized_eggs}{List of size n_females containing father for each fertilized eggs (from e.g., pollen_competition() function)}
