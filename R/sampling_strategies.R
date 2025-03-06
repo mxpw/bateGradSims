@@ -46,14 +46,13 @@ get_sexual_selection_components = function( fertilized_eggs, sampled_fertilized_
               rsg_male = rsg_male))
 }
 
-#' xxxxx
+#' Compute Qfoc
 #'
-#' xxxxx
+#' Compute Qfoc needed for MSgc computation
+#
+#' @details Product of couple production
 #'
-#'
-#' @details xxx
-#'
-#' @return xxxx
+#' @return Qfoc
 #'
 # Il ne faut pas mettre de @export, on conserve comme fonction interne (les gens qui utiilisent le paquet ne peuvent pas l'utiliser, et ne savent pas qu'elle existe.)
 #'
@@ -61,62 +60,73 @@ get_sexual_selection_components = function( fertilized_eggs, sampled_fertilized_
 #'
 
 # Function to calculate Qfoc for a given group (mothers or fathers)
-compute_Qfoc <- function(focal_list, is_mother = TRUE) {
+compute_Qfoc <- function(focal_list) {
   Qfoc <- numeric(length(focal_list))
 
-  for (i in seq_along(focal_list)) {
-    pairs <- table(focal_list[[i]])  # Count occurrences of each father for this mother
-    prod_couple <- sum(pairs * (pairs - 1))  # Product of pairs (count * (count - 1))
-    Qfoc[i] <- prod_couple
+  for (focal_it in seq_along(focal_list)) {
+    pairs <- table(focal_list[[focal_it]])  # Count occurrences of each father for this mother
+    prod_couple <- sum(pairs * (pairs - 1L))  # Product of pairs (count * (count - 1))
+    prod_foc <- length(focal_list[[focal_it]])
+    Qfoc[focal_it] <- prod_couple/(prod_foc * (prod_foc - 1L))
   }
 
   return(Qfoc)
 }
 
-#' idem, je te laisse compléter si nécessaire (pense à générer la doc avant aussi (build -> check))
+#' Compute Qmin or Qmax
+#'
+#' Compute Qmin and Qmax needed for MSgc computation
+#
+#' @details Qmin retransmits a distribution of seeds that is as uniform as
+#' possible among potential mates, while Qmax retransmits a distribution
+#' of seeds that is as heterogeneous as possible, always starting with the
+#' potential mate who has produced the most seeds in total.
+#'
+#' @return Qmin or Qmax
 #'
 compute_Q <- function(focal_list, method = "min") {
   Q <- numeric(length(focal_list))  # Initialize result vector
 
   # Step 1: Calculate the total seeds produced by each parent (all parents combined)
-  total_counts <- table(unlist(focal_list))
-  total_counts_df <- data.frame(parent = as.numeric(names(total_counts)), total = as.numeric(total_counts))
+  mate_total_counts <- table(unlist(focal_list))
+  mate_total_counts_df <-   setNames(as.data.frame(mate_total_counts), c("mate","total"))
 
-  for (i in seq_along(focal_list)) {
-    parents <- focal_list[[i]]
+  for (focal_it in seq_along(focal_list)) {
+    # Total production for the focal individual
+    prod_foc <- length(focal_list[[focal_it]])
 
     # Step 2: Count the seeds produced specifically with the focal individual
-    parent_counts <- table(parents)
-    parent_df <- data.frame(parent = as.numeric(names(parent_counts)), count = as.numeric(parent_counts))
+    mate_counts <- table(focal_list[[focal_it]])
+    mate_df <- setNames(as.data.frame(mate_counts), c("mate","count"))
 
     # Step 3: Add parents absent from the relationship but present in `total_counts_df`
-    parent_df <- merge(total_counts_df, parent_df, by = "parent", all.x = TRUE)
-    parent_df$count[is.na(parent_df$count)] <- 0  # Replace NA with 0
+    mate_df <- merge(mate_total_counts_df, mate_df, by = "mate", all.x = TRUE)
+    mate_df$count[is.na(mate_df$count)] <- 0L  # Replace NA with 0
 
     # Step 4: Sort parents by their total seed production (in descending order)
-    parent_df <- parent_df[order(-parent_df$total), ]
+    mate_df <- mate_df[order(-mate_df$total), ]
 
     # Step 5: Distribute seeds based on the chosen method
-    parent_df$allocated_seeds <- rep(0, nrow(parent_df))
-    remaining_seeds <- sum(parent_df$count)
+    mate_df$allocated_seeds <- rep(0L, nrow(mate_df))
+    remaining_seeds <- sum(mate_df$count)
 
     if (method == "min") {
       # Most equitable distribution possible
       index <- 1
       while (remaining_seeds > 0) {
-        if (parent_df$total[index] > 0) {
-          parent_df$allocated_seeds[index] <- parent_df$allocated_seeds[index] + 1
-          parent_df$total[index] <- parent_df$total[index] - 1
+        if (mate_df$total[index] > 0) {
+          mate_df$allocated_seeds[index] <- mate_df$allocated_seeds[index] + 1
+          mate_df$total[index] <- mate_df$total[index] - 1
           remaining_seeds <- remaining_seeds - 1
         }
-        index <- ifelse(index == nrow(parent_df), 1, index + 1)  # Circular rotation
+        index <- ifelse(index == nrow(mate_df), 1, index + 1)  # Circular rotation
       }
     } else if (method == "max") {
       # Most imbalanced distribution possible
       index <- 1
       while (remaining_seeds > 0) {
-        max_allocatable <- min(parent_df$total[index], remaining_seeds)
-        parent_df$allocated_seeds[index] <- parent_df$allocated_seeds[index] + max_allocatable
+        max_allocatable <- min(mate_df$total[index], remaining_seeds)
+        mate_df$allocated_seeds[index] <- mate_df$allocated_seeds[index] + max_allocatable
         remaining_seeds <- remaining_seeds - max_allocatable
         index <- index + 1  # Move to the next parent
       }
@@ -125,7 +135,7 @@ compute_Q <- function(focal_list, method = "min") {
     }
 
     # Step 6: Calculate Q
-    Q[i] <- sum(parent_df$allocated_seeds * (parent_df$allocated_seeds - 1))
+    Q[focal_it] <- sum(mate_df$allocated_seeds * (mate_df$allocated_seeds - 1))/(prod_foc * (prod_foc - 1L))
   }
 
   return(Q)
@@ -154,11 +164,11 @@ compute_msgc <- function(fertilized_eggs) {
   fathers <- unique(unlist(fertilized_eggs))  # IDs of unique fathers
 
   # Calculate Qfoc for females and males
-  Qfoc_female <- compute_Qfoc(fertilized_eggs, is_mother = TRUE)
+  Qfoc_female <- compute_Qfoc(fertilized_eggs)
 
   # Reverse the list to obtain the fathers
   list_fathers <- split(rep(mothers, sapply(fertilized_eggs, length)), unlist(fertilized_eggs))
-  Qfoc_male <- compute_Qfoc(list_fathers, is_mother = FALSE)
+  Qfoc_male <- compute_Qfoc(list_fathers)
 
   # Calculate Qmin and Qmax for females
   Qmin_female <- compute_Q(fertilized_eggs, method = "min")
@@ -169,8 +179,8 @@ compute_msgc <- function(fertilized_eggs) {
   Qmax_male <- compute_Q(list_fathers, method = "max")
 
   # Calculate msgc_female and msgc_male
-  msgc_female <- (Qfoc_female - Qmin_female) / (Qmax_female - Qmin_female)
-  msgc_male <- (Qfoc_male - Qmin_male) / (Qmax_male - Qmin_male)
+  msgc_female <- 1 - ((Qfoc_female - Qmin_female) / (Qmax_female - Qmin_female))
+  msgc_male <- 1 - ((Qfoc_male - Qmin_male) / (Qmax_male - Qmin_male))
 
   # Return the results
   return(list(msgc_female = msgc_female,
