@@ -2,16 +2,16 @@
 % Please edit documentation in R/sampling_strategies.R
 \name{compute_Qfoc}
 \alias{compute_Qfoc}
-\title{xxxxx}
+\title{Compute Qfoc}
 \usage{
-compute_Qfoc(focal_list, is_mother = TRUE)
+compute_Qfoc(focal_list)
 }
 \value{
-xxxx
+Qfoc
 }
 \description{
-xxxxx
+Compute Qfoc needed for MSgc computation
 }
 \details{
-xxx
+Product of couple production
 }

@@ -2,10 +2,19 @@
 % Please edit documentation in R/sampling_strategies.R
 \name{compute_Q}
 \alias{compute_Q}
-\title{idem, je te laisse compléter si nécessaire (pense à générer la doc avant aussi (build -> check))}
+\title{Compute Qmin or Qmax}
 \usage{
 compute_Q(focal_list, method = "min")
 }
+\value{
+Qmin or Qmax
+}
 \description{
-idem, je te laisse compléter si nécessaire (pense à générer la doc avant aussi (build -> check))
+Compute Qmin and Qmax needed for MSgc computation
+}
+\details{
+Qmin retransmits a distribution of seeds that is as uniform as
+possible among potential mates, while Qmax retransmits a distribution
+of seeds that is as heterogeneous as possible, always starting with the
+potential mate who has produced the most seeds in total.
 }
