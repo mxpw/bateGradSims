@@ -96,6 +96,10 @@ compute_Q <- function(focal_list, method = "min") {
     # Total production for the focal individual
     prod_foc <- length(focal_list[[focal_it]])
 
+    if (length(focal_list[[focal_it]]) == 0) {
+      next  # Next focal individual
+    }
+
     # Step 2: Count the seeds produced specifically with the focal individual
     mate_counts <- table(focal_list[[focal_it]])
     mate_df <- setNames(as.data.frame(mate_counts), c("mate", "count"))
