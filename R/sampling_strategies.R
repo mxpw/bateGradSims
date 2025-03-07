@@ -93,69 +93,71 @@ compute_Q <- function(focal_list, method = "min") {
   rownames(mate_total_counts_df) <- mate_total_counts_df$mate
 
   for (focal_it in seq_along(focal_list)) {
+
     # Total production for the focal individual
     prod_foc <- length(focal_list[[focal_it]])
 
     if (length(focal_list[[focal_it]]) == 0) {
+      Q <- NA
       next  # Next focal individual
-    }
-
-    # Step 2: Count the seeds produced specifically with the focal individual
-    mate_counts <- table(focal_list[[focal_it]])
-    mate_df <- setNames(as.data.frame(mate_counts), c("mate", "count"))
-
-    # Step 3: Add parents absent from the relationship but present in total_counts_df
-    mate_df <- merge(mate_total_counts_df, mate_df, by = "mate", all.x = TRUE)
-    mate_df$count[is.na(mate_df$count)] <- 0L  # Replace NA with 0
-    rownames(mate_df) <- mate_df$mate
-
-    mate_df$allocated_seeds <- integer(nrow(mate_df))
-    remaining_seeds_on_focal <- sum(mate_df$count)
-
-    # Step 4: Distribution based on the chosen method
-    if (method == "min") {
-      # Most equitable distribution possible
-      mate_df <- mate_df[order(mate_df$total), ]
-      nmates <- nrow(mate_df)
-      allocated_seeds <- integer(nmates)
-      remaining_seeds_per_mate <- mate_df$total
-
-      while (remaining_seeds_on_focal > 0L) {
-        pos_in_mate_df <- which.max(remaining_seeds_per_mate > 0L)
-        max_seeds <- remaining_seeds_per_mate[pos_in_mate_df]
-
-        if (max_seeds > 0L) {
-          mate_range <- pos_in_mate_df - 1L + seq(min(nmates + 1L - pos_in_mate_df, remaining_seeds_on_focal))
-          allocated_seeds[mate_range] <- allocated_seeds[mate_range] + 1L
-          remaining_seeds_per_mate[mate_range] <- remaining_seeds_per_mate[mate_range] - 1L
-          remaining_seeds_on_focal <- remaining_seeds_on_focal - length(mate_range)
-        } else {
-          stop("Cannot allocate all seeds")
-        }
-      }
-    } else if (method == "max") {
-      # Most imbalanced distribution possible
-      mate_df <- mate_df[order(-mate_df$total), ]
-      allocated_seeds <- integer(nrow(mate_df))
-      pos_in_mate_df <- 1L
-
-      while (remaining_seeds_on_focal > 0L) {
-        max_seeds <- min(remaining_seeds_on_focal, mate_total_counts_df[mate_df$mate[pos_in_mate_df], "total"])
-
-        if (max_seeds > 0L) {
-          allocated_seeds[pos_in_mate_df] <- allocated_seeds[pos_in_mate_df] + max_seeds
-          remaining_seeds_on_focal <- remaining_seeds_on_focal - max_seeds
-        }
-        pos_in_mate_df <- pos_in_mate_df + 1L
-      }
     } else {
-      stop("Invalid method. Use 'min' or 'max'.")
+
+      # Step 2: Count the seeds produced specifically with the focal individual
+      mate_counts <- table(focal_list[[focal_it]])
+      mate_df <- setNames(as.data.frame(mate_counts), c("mate", "count"))
+
+      # Step 3: Add parents absent from the relationship but present in total_counts_df
+      mate_df <- merge(mate_total_counts_df, mate_df, by = "mate", all.x = TRUE)
+      mate_df$count[is.na(mate_df$count)] <- 0L  # Replace NA with 0
+      rownames(mate_df) <- mate_df$mate
+
+      mate_df$allocated_seeds <- integer(nrow(mate_df))
+      remaining_seeds_on_focal <- sum(mate_df$count)
+
+      # Step 4: Distribution based on the chosen method
+      if (method == "min") {
+        # Most equitable distribution possible
+        mate_df <- mate_df[order(mate_df$total), ]
+        nmates <- nrow(mate_df)
+        allocated_seeds <- integer(nmates)
+        remaining_seeds_per_mate <- mate_df$total
+
+        while (remaining_seeds_on_focal > 0L) {
+          pos_in_mate_df <- which.max(remaining_seeds_per_mate > 0L)
+          max_seeds <- remaining_seeds_per_mate[pos_in_mate_df]
+
+          if (max_seeds > 0L) {
+            mate_range <- pos_in_mate_df - 1L + seq(min(nmates + 1L - pos_in_mate_df, remaining_seeds_on_focal))
+            allocated_seeds[mate_range] <- allocated_seeds[mate_range] + 1L
+            remaining_seeds_per_mate[mate_range] <- remaining_seeds_per_mate[mate_range] - 1L
+            remaining_seeds_on_focal <- remaining_seeds_on_focal - length(mate_range)
+          } else {
+            stop("Cannot allocate all seeds")
+          }
+        }
+      } else if (method == "max") {
+        # Most imbalanced distribution possible
+        mate_df <- mate_df[order(-mate_df$total), ]
+        allocated_seeds <- integer(nrow(mate_df))
+        pos_in_mate_df <- 1L
+
+        while (remaining_seeds_on_focal > 0L) {
+          max_seeds <- min(remaining_seeds_on_focal, mate_total_counts_df[mate_df$mate[pos_in_mate_df], "total"])
+
+          if (max_seeds > 0L) {
+            allocated_seeds[pos_in_mate_df] <- allocated_seeds[pos_in_mate_df] + max_seeds
+            remaining_seeds_on_focal <- remaining_seeds_on_focal - max_seeds
+          }
+          pos_in_mate_df <- pos_in_mate_df + 1L
+        }
+      } else {
+        stop("Invalid method. Use 'min' or 'max'.")
+      }
+
+      # Step 6: Calculate Q
+      Q[focal_it] <- sum(allocated_seeds * (allocated_seeds - 1)) / (prod_foc * (prod_foc - 1L))
     }
-
-    # Step 6: Calculate Q
-    Q[focal_it] <- sum(allocated_seeds * (allocated_seeds - 1)) / (prod_foc * (prod_foc - 1L))
   }
-
   return(Q)
 }
 
