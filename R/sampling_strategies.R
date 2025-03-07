@@ -637,7 +637,7 @@ sampling = function(fertilized_eggs, n_males, methods = NULL, mso = NULL, gamete
   # Get true MS/RS (no sampling)
   sampled_fertilized_eggs = sampling_groundtruth(fertilized_eggs)
   spl = get_sexual_selection_components(fertilized_eggs, sampled_fertilized_eggs, n_males)
-  msgc_result = compute_msgc(fertilized_eggs)
+  msgc_result = compute_msgc(fertilized_eggs,n_males)
   tmp = tibble(mso = mso_vec,
                msg = c(spl$msg_female, spl$msg_male),
                msgc = c(msgc_result$msgc_female, msgc_result$msgc_male),
