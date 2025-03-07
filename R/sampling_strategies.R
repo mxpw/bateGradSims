@@ -197,8 +197,10 @@ compute_msgc <- function(fertilized_eggs,n_males) {
   msgc_male <- 1 - ((Qfoc_male - Qmin_male) / (Qmax_male - Qmin_male))
 
   # Add males that did not reproduce
-  complete_male_df <- data.frame(fathers = 1:n_males) %>%
-    left_join(data.frame(fathers,msgc_male), by= "fathers")
+  complete_male_df <- merge(data.frame(fathers = 1:n_males),
+                            data.frame(fathers,msgc_male),
+                            by = "fathers", all.x = TRUE)
+
 
   # Return the results
   return(list(msgc_female = msgc_female,
