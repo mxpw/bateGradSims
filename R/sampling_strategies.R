@@ -87,7 +87,7 @@ compute_Qfoc <- function(focal_list) {
 compute_Q <- function(focal_list, method = "min") {
   Q <- numeric(length(focal_list))  # Initialize result vector
 
-  # Step 1: Calculate the total seeds produced by each parent
+  # Calculate the total seeds produced by each parent
   mate_total_counts <- table(unlist(focal_list))
   mate_total_counts_df <- setNames(as.data.frame(mate_total_counts), c("mate", "total"))
   rownames(mate_total_counts_df) <- mate_total_counts_df$mate
@@ -96,62 +96,72 @@ compute_Q <- function(focal_list, method = "min") {
     # Total production for the focal individual
     prod_foc <- length(focal_list[[focal_it]])
 
-    # Step 2: Count the seeds produced specifically with the focal individual
-    mate_counts <- table(focal_list[[focal_it]])
-    mate_df <- setNames(as.data.frame(mate_counts), c("mate", "count"))
-
-    # Step 3: Add parents absent from the relationship but present in total_counts_df
-    mate_df <- merge(mate_total_counts_df, mate_df, by = "mate", all.x = TRUE)
-    mate_df$count[is.na(mate_df$count)] <- 0L  # Replace NA with 0
-    rownames(mate_df) <- mate_df$mate
-
-    mate_df$allocated_seeds <- integer(nrow(mate_df))
-    remaining_seeds_on_focal <- sum(mate_df$count)
-
-    # Step 4: Distribution based on the chosen method
-    if (method == "min") {
-      # Most equitable distribution possible
-      mate_df <- mate_df[order(mate_df$total), ]
-      nmates <- nrow(mate_df)
-      allocated_seeds <- integer(nmates)
-      remaining_seeds_per_mate <- mate_df$total
-
-      while (remaining_seeds_on_focal > 0L) {
-        pos_in_mate_df <- which.max(remaining_seeds_per_mate > 0L)
-        max_seeds <- remaining_seeds_per_mate[pos_in_mate_df]
-
-        if (max_seeds > 0L) {
-          mate_range <- pos_in_mate_df - 1L + seq(min(nmates + 1L - pos_in_mate_df, remaining_seeds_on_focal))
-          allocated_seeds[mate_range] <- allocated_seeds[mate_range] + 1L
-          remaining_seeds_per_mate[mate_range] <- remaining_seeds_per_mate[mate_range] - 1L
-          remaining_seeds_on_focal <- remaining_seeds_on_focal - length(mate_range)
-        } else {
-          stop("Cannot allocate all seeds")
-        }
-      }
-    } else if (method == "max") {
-      # Most imbalanced distribution possible
-      mate_df <- mate_df[order(-mate_df$total), ]
-      allocated_seeds <- integer(nrow(mate_df))
-      pos_in_mate_df <- 1L
-
-      while (remaining_seeds_on_focal > 0L) {
-        max_seeds <- min(remaining_seeds_on_focal, mate_total_counts_df[mate_df$mate[pos_in_mate_df], "total"])
-
-        if (max_seeds > 0L) {
-          allocated_seeds[pos_in_mate_df] <- allocated_seeds[pos_in_mate_df] + max_seeds
-          remaining_seeds_on_focal <- remaining_seeds_on_focal - max_seeds
-        }
-        pos_in_mate_df <- pos_in_mate_df + 1L
-      }
+    if (length(focal_list[[focal_it]]) == 0) {
+      Q <- NA
+      next  # Next focal individual
     } else {
-      stop("Invalid method. Use 'min' or 'max'.")
+      # Count the seeds produced specifically with the focal individual
+      mate_counts <- table(focal_list[[focal_it]])
+      mate_df <- setNames(as.data.frame(mate_counts), c("mate", "count"))
+
+      # Add parents absent from the relationship but present in total_counts_df
+      mate_df <- merge(mate_total_counts_df,
+                       mate_df,
+                       by = "mate",
+                       all.x = TRUE)
+      mate_df$count[is.na(mate_df$count)] <- 0L  # Replace NA with 0
+      rownames(mate_df) <- mate_df$mate
+
+      mate_df$allocated_seeds <- integer(nrow(mate_df))
+      remaining_seeds_on_focal <- sum(mate_df$count)
+
+      # Distribution based on the chosen method
+      if (method == "min") {
+        # Most equitable distribution possible
+        mate_df <- mate_df[order(mate_df$total), ]
+        nmates <- nrow(mate_df)
+        allocated_seeds <- integer(nmates)
+        remaining_seeds_per_mate <- mate_df$total
+
+        while (remaining_seeds_on_focal > 0L) {
+          pos_in_mate_df <- which.max(remaining_seeds_per_mate > 0L)
+          max_seeds <- remaining_seeds_per_mate[pos_in_mate_df]
+
+          if (max_seeds > 0L) {
+            mate_range <- pos_in_mate_df - 1L + seq(min(
+              nmates + 1L - pos_in_mate_df,
+              remaining_seeds_on_focal
+            ))
+            allocated_seeds[mate_range] <- allocated_seeds[mate_range] + 1L
+            remaining_seeds_per_mate[mate_range] <- remaining_seeds_per_mate[mate_range] - 1L
+            remaining_seeds_on_focal <- remaining_seeds_on_focal - length(mate_range)
+          } else {
+            stop("Cannot allocate all seeds")
+          }
+        }
+      } else if (method == "max") {
+        # Most imbalanced distribution possible
+        mate_df <- mate_df[order(-mate_df$total), ]
+        allocated_seeds <- integer(nrow(mate_df))
+        pos_in_mate_df <- 1L
+
+        while (remaining_seeds_on_focal > 0L) {
+          max_seeds <- min(remaining_seeds_on_focal, mate_total_counts_df[mate_df$mate[pos_in_mate_df], "total"])
+
+          if (max_seeds > 0L) {
+            allocated_seeds[pos_in_mate_df] <- allocated_seeds[pos_in_mate_df] + max_seeds
+            remaining_seeds_on_focal <- remaining_seeds_on_focal - max_seeds
+          }
+          pos_in_mate_df <- pos_in_mate_df + 1L
+        }
+      } else {
+        stop("Invalid method. Use 'min' or 'max'.")
+      }
+
+      # Calculate Q
+      Q[focal_it] <- sum(allocated_seeds * (allocated_seeds - 1)) / (prod_foc * (prod_foc - 1L))
     }
-
-    # Step 6: Calculate Q
-    Q[focal_it] <- sum(allocated_seeds * (allocated_seeds - 1)) / (prod_foc * (prod_foc - 1L))
   }
-
   return(Q)
 }
 
@@ -198,8 +208,10 @@ compute_msgc <- function(fertilized_eggs,n_males) {
   msgc_male <- 1 - ((Qfoc_male - Qmin_male) / (Qmax_male - Qmin_male))
 
   # Add males that did not reproduce
-  complete_male_df <- data.frame(fathers = 1:n_males) %>%
-    left_join(data.frame(fathers,msgc_male), by= "fathers")
+  complete_male_df <- merge(data.frame(fathers = 1:n_males),
+                            data.frame(fathers,msgc_male),
+                            by = "fathers", all.x = TRUE)
+
 
   # Return the results
   return(list(msgc_female = msgc_female,
@@ -638,7 +650,7 @@ sampling = function(fertilized_eggs, n_males, methods = NULL, mso = NULL, gamete
   # Get true MS/RS (no sampling)
   sampled_fertilized_eggs = sampling_groundtruth(fertilized_eggs)
   spl = get_sexual_selection_components(fertilized_eggs, sampled_fertilized_eggs, n_males)
-  msgc_result = compute_msgc(fertilized_eggs)
+  msgc_result = compute_msgc(fertilized_eggs,n_males)
   tmp = tibble(mso = mso_vec,
                msg = c(spl$msg_female, spl$msg_male),
                msgc = c(msgc_result$msgc_female, msgc_result$msgc_male),
@@ -655,9 +667,10 @@ sampling = function(fertilized_eggs, n_males, methods = NULL, mso = NULL, gamete
     for(r in 1:n_rep){
       sampled_fertilized_eggs = do.call( methods[[m]]$method, c(list(fertilized_eggs, n_males), methods[[m]]$params) )
       spl = get_sexual_selection_components(fertilized_eggs, sampled_fertilized_eggs, n_males)
+      msgc_result = compute_msgc(fertilized_eggs,n_males)
       tmp = tibble(mso = mso_vec,
                    msg = c(spl$msg_female, spl$msg_male),
-                   msgc = NA,
+                   msgc = c(msgc_result$msgc_female, msgc_result$msgc_male),
                    rsg = c(spl$rsg_female, spl$rsg_male),
                    n_gam = gam_vec,
                    sex = c(rep("F", n_females), rep("M", n_males)),
