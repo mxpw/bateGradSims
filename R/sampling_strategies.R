@@ -220,7 +220,7 @@ compute_msgc <- function(fertilized_eggs,n_males) {
   # Return the results
   return(list(msgc_female = msgc_female,
               msgc_male = complete_male_df$msgc_male,
-              msgc_simplefemale = msgc_simple_female,
+              msgc_simple_female = msgc_simple_female,
               msgc_simple_male = complete_male_df$msgc_simple_male)
          )
 }
