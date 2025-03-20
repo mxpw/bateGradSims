@@ -639,7 +639,7 @@ sampling = function(fertilized_eggs, n_males, methods = NULL, mso = NULL, gamete
 
   n_females = length(fertilized_eggs)
 
-  output = tibble(mso = numeric(), msg = numeric(), msgc = numeric(), rsg = numeric(), n_gam = numeric(),
+  output = tibble(mso = numeric(), msg = numeric(), msgc = numeric(),  msgc_simple = numeric(), rsg = numeric(), n_gam = numeric(),
                   sex = character(), sampling_method = character(), parameters = list(), parameters_string = character())
 
   if(!is.null(mso)){
