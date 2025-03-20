@@ -207,15 +207,22 @@ compute_msgc <- function(fertilized_eggs,n_males) {
   msgc_female <- 1 - ((Qfoc_female - Qmin_female) / (Qmax_female - Qmin_female))
   msgc_male <- 1 - ((Qfoc_male - Qmin_male) / (Qmax_male - Qmin_male))
 
+  # Calculate easier msgc_female and msgc_male
+  msgc_simple_female <- 1 - Qfoc_female
+  msgc_simple_male <- 1 - Qfoc_male
+
   # Add males that did not reproduce
   complete_male_df <- merge(data.frame(fathers = 1:n_males),
-                            data.frame(fathers,msgc_male),
+                            data.frame(fathers,msgc_male,msgc_simple_male),
                             by = "fathers", all.x = TRUE)
 
 
   # Return the results
   return(list(msgc_female = msgc_female,
-              msgc_male = complete_male_df$msgc_male))
+              msgc_male = complete_male_df$msgc_male,
+              msgc_simplefemale = msgc_simple_female,
+              msgc_simple_male = complete_male_df$msgc_simple_male)
+         )
 }
 
 #' Sampling ground-truth
@@ -654,6 +661,7 @@ sampling = function(fertilized_eggs, n_males, methods = NULL, mso = NULL, gamete
   tmp = tibble(mso = mso_vec,
                msg = c(spl$msg_female, spl$msg_male),
                msgc = c(msgc_result$msgc_female, msgc_result$msgc_male),
+               msgc_simple = c(msgc_result$msgc_simple_female, msgc_result$msgc_simple_male),
                rsg = c(spl$rsg_female, spl$rsg_male),
                n_gam = gam_vec,
                sex = c(rep("F", n_females), rep("M", n_males)),
@@ -671,6 +679,7 @@ sampling = function(fertilized_eggs, n_males, methods = NULL, mso = NULL, gamete
       tmp = tibble(mso = mso_vec,
                    msg = c(spl$msg_female, spl$msg_male),
                    msgc = c(msgc_result$msgc_female, msgc_result$msgc_male),
+                   msgc_simple = c(msgc_result$msgc_simple_female, msgc_result$msgc_simple_male),
                    rsg = c(spl$rsg_female, spl$rsg_male),
                    n_gam = gam_vec,
                    sex = c(rep("F", n_females), rep("M", n_males)),
